@@ -12,10 +12,24 @@ _Xake_ means "chess" in Basque.
 
 **https://xake.onrender.com**
 
+No sign-up, no account: open the page and play.
+
 > This demo is a public instance hosted on [Render](https://render.com/), shared by everyone: the
 > engine may be slower when several people play at once. It comes without any guarantee and can be
-> limited or stopped at any time. Your games stay in your browser, nothing is stored on the server;
-> to keep a game, export it as PGN or [install your own](#install).
+> limited or stopped at any time. To keep a game safe, export it as PGN or
+> [install your own](#install).
+
+## 🔒 Privacy
+
+- **No sign-up, no account, no login.**
+- **Your games live in your browser** (`localStorage`), on your device only: the server has no
+  database and stores nothing. Clearing the site data deletes them, export a PGN to keep one.
+- **No cookies, no analytics, no tracking, no third-party request**: every file is served by the
+  instance itself.
+- The server only receives the position to evaluate (start position and moves), answers and
+  forgets it. Shared links carry the game after the `#`, a part of the URL browsers never send to
+  the server.
+- Like any web server, the host may keep standard access logs (IP address, requested URL).
 
 ![Desktop: best moves on demand, numbered arrows, variations and bookmarks](docs/screenshots/desktop-best-moves.png)
 
