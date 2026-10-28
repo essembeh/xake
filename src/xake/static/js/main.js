@@ -84,8 +84,10 @@ function persist() {
   if (!storage.saveGame(game)) toast(t("app.saveFailed"));
 }
 
+// A past position (it has a continuation) lets me replace any move, mine or the engine's (spec 001 §6.5).
 function canUserMove(chess) {
-  return !thinking && !chess.isGameOver() && (game.twoSides || colorOf(chess) === game.playerColor);
+  const past = tree.current(game).children.length > 0;
+  return !thinking && !chess.isGameOver() && (game.twoSides || past || colorOf(chess) === game.playerColor);
 }
 
 function cancelEngine() {
@@ -211,6 +213,7 @@ function renderStatus(chess, turn) {
   else if (thinking) text = t("status.thinking");
   else if (game.twoSides) text = t("status.sideToMove", { side: sideName(turn) });
   else if (turn === game.playerColor) text = chess.inCheck() ? t("status.checkYourTurn") : t("status.yourTurn");
+  else if (tree.current(game).children.length) text = t("status.replaceEngine");
   else text = t("status.engineTurn");
   $("status").textContent = text;
 }
