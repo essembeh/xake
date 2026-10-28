@@ -2,7 +2,7 @@
 
 Xake ("chess" in Basque): a chess training web app. Play Stockfish at a chosen Elo, best moves on
 demand, evaluation graph with annotated mistakes, variations, bookmarks, shareable links, PWA.
-Design decisions live in `docs/specs/*.md` (001 MVP, 002 UX, 003 i18n): read the relevant spec
+Design decisions live in `docs/specs/*.md` (001 MVP, 002 UX, 003 i18n, 004 game analysis): read the relevant spec
 before changing a behaviour, update it when a decision changes.
 
 ## Architecture
@@ -65,6 +65,20 @@ The `Justfile` is the project interface:
   chosen moves, 150 ms timeline judgements differ between runs).
 - The front-end has no test suite: check UI changes in a browser (Playwright from nixpkgs, see
   the `screenshots` recipe for the NixOS incantation).
+
+## Keeping docs in step with each change
+
+Every requested change is done when these are up to date, in the same change:
+
+- **Specs**: update the existing `docs/specs/*.md` that describes the behaviour (new decision,
+  abandoned option and why); a new spec only for a new area. A comment citing a spec section
+  means that section must exist.
+- **Translations**: every new or changed string in **English and French** (`js/i18n.js`, plus the
+  English fallback text in `index.html` markup).
+- **Screenshots**: a visible UI change may outdate `docs/screenshots/`: check them, regenerate with
+  `just screenshots` (dev server running) and adapt `scripts/screenshots.py` if the flow changed.
+  Wait for the UI to be validated before regenerating.
+- **README**: keep the Features list (and shortcuts, captions) in line with what the app does.
 
 ## Conventions
 

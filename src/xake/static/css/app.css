@@ -677,6 +677,7 @@ cg-board square.check {
 }
 
 .ctrl:disabled,
+.toggle:disabled,
 .games-list li button:disabled {
   opacity: 0.35;
   cursor: default;
@@ -691,29 +692,35 @@ cg-board square.check {
   fill: currentColor;
 }
 
+/* One full-width row per toggle: icons, labels and shortcuts line up. */
 .toggles {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 6px;
-}
-
-.toggles .toggle {
-  flex: 1 1 auto;
 }
 
 .toggle {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 8px;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.toggle svg {
+  flex: none;
+}
+
+.toggle span {
+  flex: 1;
 }
 
 .toggle kbd {
   display: none;
+  flex: none;
 }
 
 .toggle[aria-pressed="true"] {
@@ -742,6 +749,25 @@ cg-board square.check {
   gap: 6px;
 }
 
+.lines-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.lines-head .mv {
+  color: var(--fg);
+}
+
+.lines-head button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
 .line {
   display: flex;
   align-items: center;
@@ -751,6 +777,11 @@ cg-board square.check {
   padding: 0 10px;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.line:disabled {
+  color: inherit;
+  cursor: default;
 }
 
 .line.muted {
@@ -885,6 +916,39 @@ cg-board square.check {
 
 .glyph.blunder {
   color: var(--blunder);
+}
+
+/* Judged moves stand out in the list: the point of the analysis is to see where the game went wrong. */
+.moves .cell[class*="judged-"] {
+  --judged: transparent;
+  margin: 1px 2px;
+  border-radius: 6px;
+  border-left: 4px solid var(--judged);
+  background: color-mix(in srgb, var(--judged) 18%, transparent);
+}
+
+.moves .cell.judged-best {
+  --judged: var(--best);
+  background: color-mix(in srgb, var(--judged) 10%, transparent);
+}
+
+.moves .cell.judged-inaccuracy {
+  --judged: var(--inaccuracy);
+}
+
+.moves .cell.judged-mistake {
+  --judged: var(--mistake);
+}
+
+.moves .cell.judged-blunder {
+  --judged: var(--blunder);
+  background: color-mix(in srgb, var(--judged) 28%, transparent);
+}
+
+.moves .cell[class*="judged-"] .glyph {
+  font-size: 15px;
+  line-height: 1;
+  vertical-align: top;
 }
 
 .alts {

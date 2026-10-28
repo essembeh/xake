@@ -46,6 +46,7 @@
         <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
       </symbol>
       <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z" /></symbol>
+      <symbol id="i-gauge" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="1.5" /><path d="M8 13h8" /></symbol>
       <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-4 3 3 6-6" /></symbol>
       <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></symbol>
       <symbol id="i-users" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3" /><circle cx="16" cy="8" r="3" /><path d="M2 20a6 6 0 0 1 12 0M10 20a6 6 0 0 1 12 0" /></symbol>
@@ -105,13 +106,13 @@
 
         <div class="toggles">
           <button id="btn-best" class="toggle" aria-pressed="false" data-i18n-title="toggle.bestTitle">
-            <svg><use href="#i-bulb" /></svg><span data-i18n="toggle.best">Best moves</span><kbd>B</kbd>
+            <svg><use href="#i-bulb" /></svg><span data-i18n="toggle.best">Show best moves</span><kbd>B</kbd>
           </button>
           <button id="btn-analysis" class="toggle" aria-pressed="true" data-i18n-title="toggle.analysisTitle">
-            <svg><use href="#i-chart" /></svg><span data-i18n="toggle.analysis">Analysis</span><kbd>A</kbd>
+            <svg><use href="#i-gauge" /></svg><span data-i18n="toggle.analysis">Display evaluation bar</span><kbd>A</kbd>
           </button>
           <button id="btn-two-sides" class="toggle" aria-pressed="false" data-i18n-title="toggle.twoSidesTitle">
-            <svg><use href="#i-users" /></svg><span data-i18n="toggle.twoSides">Both sides</span><kbd>T</kbd>
+            <svg><use href="#i-users" /></svg><span data-i18n="toggle.twoSides">Play both sides</span><kbd>T</kbd>
           </button>
         </div>
 
@@ -122,6 +123,10 @@
         <div class="card moves-card">
           <div id="moves" class="moves"></div>
         </div>
+
+        <button id="btn-review" class="toggle review-toggle" aria-pressed="false" data-i18n-title="toggle.reviewTitle">
+          <svg><use href="#i-chart" /></svg><span data-i18n="toggle.review">Analyse the game</span><kbd>R</kbd>
+        </button>
       </section>
 
       <aside class="insights">
@@ -261,6 +266,7 @@
         <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd data-i18n="help.ends"></dd>
         <dt><kbd>B</kbd> <kbd data-i18n="help.space"></kbd></dt><dd data-i18n="help.best"></dd>
         <dt><kbd>A</kbd></dt><dd data-i18n="help.analysis"></dd>
+        <dt><kbd>R</kbd></dt><dd data-i18n="help.review"></dd>
         <dt><kbd>T</kbd></dt><dd data-i18n="help.twoSides"></dd>
         <dt><kbd>C</kbd></dt><dd data-i18n="help.swap"></dd>
         <dt><kbd>U</kbd> <kbd>⌫</kbd></dt><dd data-i18n="help.undo"></dd>

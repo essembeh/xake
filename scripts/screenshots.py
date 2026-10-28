@@ -62,10 +62,14 @@ def main() -> None:
 
         page.keyboard.press("b")
         open_game(page, args.url, BLUNDERS)
+        page.keyboard.press("r")
+        page.wait_for_function("!document.querySelector('#timeline-progress').textContent", timeout=60_000)
         # The quick timeline evals vary between runs: jump to the first flagged move
         page.locator(".tl-dot.blunder, .tl-dot.mistake, .tl-dot.inaccuracy").first.click()
+        page.wait_for_selector("#lines button.line", timeout=20_000)
         page.wait_for_timeout(800)
         page.screenshot(path=args.out / "desktop-timeline.png")
+        page.keyboard.press("r")
 
         open_game(page, args.url, SCHOLAR, color="b")
         page.screenshot(path=args.out / "desktop-game-over.png")

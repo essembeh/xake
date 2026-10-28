@@ -39,8 +39,12 @@ No sign-up, no account: open the page and play.
 - **Best moves on demand** (`B`, or hold a right click / long press on the board): up to 5
   Stockfish lines, numbered and colour-coded arrows on the board, the same numbers in the list;
   tap a line to play it.
-- **Evaluation bar** next to the board and an **evaluation graph** of the whole game (`A`), with
-  inaccuracies `?!`, mistakes `?` and blunders `??` marked on the graph and in the move list.
+- **Evaluation bar** next to the board (`A`), with inaccuracies `?!`, mistakes `?` and blunders
+  `??` marked in the move list.
+- **Game analysis** (`R`): an evaluation graph of the whole game, the judged moves highlighted, and
+  for each move, yours or Stockfish's, the best moves that could have been played instead.
+  **Replay this move** (or a tap on an alternative, in the list or on its arrow) takes you back
+  just before one of your moves to try something else; **Back to the game** returns to the last move.
 - **Variations**: go back anywhere and play another move, nothing is lost; the move list shows the
   line you browse, each move lists its alternatives (`e6 or Bf5`), a tap switches to one.
 - **Bookmarks** (`M`) to jump back to a position and try another idea.
@@ -53,9 +57,9 @@ No sign-up, no account: open the page and play.
 - **Sounds** for moves, captures, checks and the end of the game, can be muted in the settings.
 - **Mobile first**: touch friendly layout, installable on the iOS / Android home screen (PWA).
 
-| Evaluation graph | Game over |
+| Game analysis | Game over |
 | --- | --- |
-| ![Evaluation graph with annotated mistakes](docs/screenshots/desktop-timeline.png) | ![Game over card](docs/screenshots/desktop-game-over.png) |
+| ![Game analysis: evaluation graph, judged moves and the alternatives to a mistake](docs/screenshots/desktop-timeline.png) | ![Game over card](docs/screenshots/desktop-game-over.png) |
 
 | Mobile, dark theme | Settings | In French |
 | --- | --- | --- |

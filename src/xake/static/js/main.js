@@ -17,6 +17,7 @@ const TIMELINE_MOVETIME_MS = 150;
 const PV_PLIES = 10;
 const LONG_PRESS_MS = 800;
 const LONG_PRESS_SLOP_PX = 10;
+const ARROW_HIT_SQUARES = 0.4;
 // One colour per best-move rank, shared by the arrows and the list badges (spec 002 §3).
 const RANK_COLORS = ["#2e9e3e", "#2f6fd6", "#e8890c", "#9b4fc9", "#6b6b6b"];
 const ROLE_NAMES = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen" };
@@ -44,6 +45,8 @@ let evalBusy = false;
 let evalCtrl = null;
 let evalRetryTimer = null;
 let lineTip = null;
+// Game review mode (spec 004): graph, judged moves and alternatives, the engine never plays.
+let reviewing = false;
 const analysisCache = new Map();
 // Best available evaluation per node: quick timeline pass, overridden by full analyses.
 const evals = new Map();
@@ -74,7 +77,11 @@ const position = (id) => ({ start_fen: game.startFen, moves: tree.ucis(game, id)
 const analysisKey = (id) => `${id}:${prefs.multipv}`;
 const percentOf = (id) => analysisPercent(evals.get(id));
 const showsBestMoves = () => prefs.showBestMoves || peeking;
-const wantsAnalysis = () => prefs.showAnalysis || showsBestMoves();
+const wantsAnalysis = () => reviewing || prefs.showAnalysis || showsBestMoves();
+const judging = () => reviewing || prefs.showAnalysis;
+// In review, the best moves shown are the alternatives to the selected move (spec 004).
+const analysedId = () => (reviewing ? (tree.current(game).parent ?? game.rootId) : game.currentId);
+const isMine = (n) => game.twoSides || turnOfFen(tree.node(game, n.parent).fen) === game.playerColor;
 const anyDialogOpen = () => document.querySelector("dialog[open]") !== null;
 
 function dests(chess) {
@@ -92,7 +99,10 @@ function persist() {
 
 // A past position (it has a continuation) lets me replace any move, mine or the engine's (spec 001 §6.5).
 function canUserMove(chess) {
-  const past = tree.current(game).children.length > 0;
+  const n = tree.current(game);
+  const past = n.children.length > 0;
+  // In review, only right after Stockfish's move: playing there leaves the review (spec 004 §4).
+  if (reviewing && (n.parent === null || isMine(n))) return false;
   return !thinking && !chess.isGameOver() && (game.twoSides || past || colorOf(chess) === game.playerColor);
 }
 
@@ -104,7 +114,7 @@ function cancelEngine() {
 
 // Best move first: depths differ between evaluations, so the top move may still show a small loss (spec 002 §4).
 function judgementOf(n) {
-  if (!prefs.showAnalysis || n.parent === null) return null;
+  if (!judging() || n.parent === null) return null;
   if (n.by === "me" && evals.get(n.parent)?.lines?.[0]?.uci === n.uci) return BEST;
   return judge(percentOf(n.parent), percentOf(n.id), turnOfFen(tree.node(game, n.parent).fen));
 }
@@ -214,7 +224,8 @@ function renderStrips(n, turn) {
 function renderStatus(chess, turn) {
   const over = gameOverInfo(chess);
   let text;
-  if (over) text = `${over.reason}${over.winner ? "" : t("status.draw")} (${over.result})`;
+  if (reviewing) text = t("status.review");
+  else if (over) text = `${over.reason}${over.winner ? "" : t("status.draw")} (${over.result})`;
   else if (thinking) text = t("status.thinking");
   else if (game.twoSides) text = t("status.sideToMove", { side: sideName(turn) });
   else if (turn === game.playerColor) text = chess.inCheck() ? t("status.checkYourTurn") : t("status.yourTurn");
@@ -230,7 +241,8 @@ function renderControls() {
   $("btn-prev").disabled = atRoot;
   $("btn-next").disabled = !n.children.length;
   $("btn-last").disabled = !n.children.length;
-  $("btn-undo").disabled = atRoot;
+  $("btn-undo").disabled = atRoot || reviewing;
+  $("btn-swap").disabled = reviewing;
   $("btn-bookmark").classList.toggle(
     "active",
     game.bookmarks.some((b) => b.nodeId === n.id),
@@ -240,6 +252,11 @@ function renderControls() {
 function renderToggles() {
   $("btn-best").setAttribute("aria-pressed", String(prefs.showBestMoves));
   $("btn-analysis").setAttribute("aria-pressed", String(prefs.showAnalysis));
+  $("btn-review").setAttribute("aria-pressed", String(reviewing));
+  $("btn-review").querySelector("span").textContent = t(reviewing ? "review.exit" : "toggle.review");
+  $("btn-best").disabled = reviewing;
+  $("btn-analysis").disabled = reviewing;
+  $("btn-two-sides").disabled = reviewing;
   $("btn-two-sides").setAttribute("aria-pressed", String(game.twoSides));
 }
 
@@ -266,6 +283,8 @@ function renderMoves() {
   let rowOpen = false;
   const cell = (node) => {
     const out = el("div", { className: "cell" }, moveLabelEl(node, ""));
+    const judgement = reviewing && judgementOf(node);
+    if (judgement) out.classList.add(`judged-${judgement.key}`);
     const alternatives = tree.node(game, node.parent).children.filter((id) => id !== node.id);
     if (alternatives.length) {
       const alts = el("span", { className: "alts" }, el("span", { textContent: t("moves.or") }));
@@ -273,7 +292,7 @@ function renderMoves() {
       out.append(alts);
     }
     const percent = percentOf(node.id);
-    if (prefs.showAnalysis && percent !== null) {
+    if (judging() && percent !== null) {
       const evalText = formatScore(evals.get(node.id)?.score) || evals.get(node.id)?.outcome?.result || "";
       out.append(el("small", { className: "cell-eval", textContent: evalText }));
     }
@@ -349,7 +368,7 @@ function pvTokens(fromFen, sans) {
 function renderEvalBar(analysis) {
   const bar = $("evalbar");
   bar.classList.toggle("flipped", orientation === "black");
-  bar.classList.toggle("off", !prefs.showAnalysis);
+  bar.classList.toggle("off", !judging());
   const percent = analysisPercent(analysis);
   if (percent === null) return;
   bar.querySelector(".evalbar-white").style.height = `${percent}%`;
@@ -363,32 +382,55 @@ function renderEvalBar(analysis) {
   label.className = `evalbar-label ${atBottom ? "bottom" : "top"}`;
 }
 
+// Review header: the move under review, and a way back to play just before it (spec 004).
+function reviewHead(played) {
+  const head = el("div", { className: "lines-head" }, el("span", {}, `${t("review.instead")} `, moveLabelEl(played, tree.moveLabel(game, played).replace(played.san, ""))));
+  // My move: play it again from just before; Stockfish's move: take over from right after it.
+  if (isMine(played)) {
+    const replayButton = el("button", { className: "primary", textContent: t("review.replay") });
+    replayButton.onclick = () => replay(played);
+    head.append(replayButton);
+  } else if (!tree.chessAt(game, played.id).isGameOver()) {
+    const resumeButton = el("button", { className: "primary", textContent: t("review.playFromHere") });
+    resumeButton.onclick = () => {
+      reviewing = false;
+      render();
+      scheduleAnalysis();
+    };
+    head.append(resumeButton);
+  }
+  return head;
+}
+
 function renderAnalysis() {
   const n = tree.current(game);
-  const analysis = analysisCache.get(analysisKey(n.id));
-  renderEvalBar(analysis || evals.get(n.id));
+  renderEvalBar(analysisCache.get(analysisKey(n.id)) || evals.get(n.id));
+  const shown = tree.node(game, analysedId());
+  const analysis = analysisCache.get(analysisKey(shown.id));
+  const visible = reviewing || showsBestMoves();
+  const played = reviewing && n.parent !== null ? n : null;
 
   const lines = $("lines");
-  lines.hidden = !showsBestMoves();
+  lines.hidden = !visible;
   lines.replaceChildren();
   let shapes = [];
-  if (showsBestMoves()) {
+  if (visible) {
+    if (played) lines.append(reviewHead(played));
+    const playable = played ? isMine(played) : canUserMove(tree.chessAt(game, n.id));
     if (analysis?.outcome) {
       lines.append(el("div", { className: "line muted", textContent: t("lines.gameOver") }));
     } else if (analysis) {
       analysis.lines.forEach((line, i) => {
-        const button = el("button", { className: "line", title: t("lines.playThis") });
+        const button = el("button", { className: "line", title: playable ? t("lines.playThis") : "", disabled: !playable });
         const badge = el("span", { className: "rank", textContent: i + 1 });
         badge.style.background = RANK_COLORS[i];
-        const [first, ...rest] = pvTokens(n.fen, line.pv_san);
+        const [first, ...rest] = pvTokens(shown.fen, line.pv_san);
         button.append(
           badge,
           el("span", { className: "score", textContent: formatScore(line.score) }),
           el("span", { className: "pv" }, el("b", { textContent: first }), ` ${rest.join(" ")}`),
         );
-        button.onclick = () => {
-          if (canUserMove(tree.chessAt(game, game.currentId))) playMove(line.uci, "me");
-        };
+        button.onclick = () => (played ? replay(played, line.uci) : playMove(line.uci, "me"));
         lines.append(button);
       });
       // Drawn worst first so the best arrow ends up on top.
@@ -400,6 +442,7 @@ function renderAnalysis() {
           label: { text: String(i + 1), fill: RANK_COLORS[i] },
         }))
         .reverse();
+      if (played) shapes.unshift({ orig: played.uci.slice(0, 2), dest: played.uci.slice(2, 4), brush: "red" });
     } else {
       const text = analysisError ? t("lines.unavailable") : t("lines.computing");
       lines.append(el("div", { className: "line muted", textContent: text }));
@@ -409,8 +452,8 @@ function renderAnalysis() {
 }
 
 function renderTimelineCard() {
-  $("timeline-card").hidden = !prefs.showAnalysis;
-  if (!prefs.showAnalysis) return;
+  $("timeline-card").hidden = !reviewing;
+  if (!reviewing) return;
   const ids = displayedLine();
   const points = ids.map((id) => {
     const n = tree.node(game, id);
@@ -429,7 +472,7 @@ function renderTimelineCard() {
 function renderGameOver(n, chess) {
   const box = $("gameover");
   const over = gameOverInfo(chess);
-  if (!over || dismissedGameOver.has(n.id)) {
+  if (!over || reviewing || dismissedGameOver.has(n.id)) {
     box.hidden = true;
     return;
   }
@@ -440,8 +483,7 @@ function renderGameOver(n, chess) {
   const analyse = el("button", { textContent: t("gameover.analyse") });
   analyse.onclick = () => {
     dismissedGameOver.add(n.id);
-    if (!prefs.showAnalysis) updatePrefs({ showAnalysis: true });
-    else render();
+    toggleReview();
   };
   const again = el("button", { className: "primary", textContent: t("tb.new") });
   again.onclick = () => openNewGame();
@@ -465,7 +507,7 @@ function scheduleAnalysis() {
   analysisError = false;
   pumpEvals();
   if (!wantsAnalysis()) return;
-  const id = game.currentId;
+  const id = analysedId();
   if (analysisCache.has(analysisKey(id))) return;
   analysisTimer = setTimeout(() => runAnalysis(id), ANALYSIS_DEBOUNCE_MS);
 }
@@ -481,12 +523,12 @@ async function runAnalysis(id) {
     console.warn("analysis failed", error);
     analysisError = true;
   }
-  if (game.currentId === id) render();
+  if (analysedId() === id) render();
 }
 
 // Evaluates the displayed line one position at a time for the timeline (spec 002 §4).
 async function pumpEvals() {
-  if (evalBusy || !prefs.showAnalysis) return;
+  if (evalBusy || !judging()) return;
   const id = displayedLine().find((nodeId) => !evals.has(nodeId));
   if (!id) return;
   evalBusy = true;
@@ -514,7 +556,7 @@ async function pumpEvals() {
 
 async function maybeEngineMove() {
   const n = tree.current(game);
-  if (game.twoSides || n.children.length || thinking) return;
+  if (reviewing || game.twoSides || n.children.length || thinking) return;
   const chess = tree.chessAt(game, n.id);
   if (chess.isGameOver() || colorOf(chess) === game.playerColor) return;
 
@@ -595,7 +637,36 @@ async function onBoardMove(orig, dest) {
     if (!letter) return render();
     uci += letter;
   }
+  reviewing = false;
   playMove(uci, "me");
+}
+
+// Distance from point p to segment ab, in square units.
+function distanceToSegment([px, py], [ax, ay], [bx, by]) {
+  const [dx, dy] = [bx - ax, by - ay];
+  const k = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(px - ax - k * dx, py - ay - k * dy);
+}
+
+// In review, a click on an alternative's arrow plays it instead of my move; overlapping arrows go to the best rank.
+function onReviewBoardClick(event) {
+  const played = reviewing ? tree.current(game) : null;
+  if (!played || played.parent === null || !isMine(played)) return;
+  const lines = analysisCache.get(analysisKey(played.parent))?.lines;
+  if (!lines) return;
+  const rect = $("board").getBoundingClientRect();
+  const point = [((event.clientX - rect.left) / rect.width) * 8, ((event.clientY - rect.top) / rect.height) * 8];
+  const center = (square) => {
+    const file = square.charCodeAt(0) - 97 + 0.5;
+    const rank = 8 - Number(square[1]) + 0.5;
+    return orientation === "white" ? [file, rank] : [8 - file, 8 - rank];
+  };
+  let picked = null;
+  for (const line of lines) {
+    const distance = distanceToSegment(point, center(line.uci.slice(0, 2)), center(line.uci.slice(2, 4)));
+    if (distance < ARROW_HIT_SQUARES && (!picked || distance < picked.distance)) picked = { distance, uci: line.uci };
+  }
+  if (picked) replay(played, picked.uci);
 }
 
 function goTo(id) {
@@ -611,7 +682,7 @@ function goTo(id) {
 // Takes back my last move and the engine reply, deleting them only when nothing branches off (spec 001 §6.5).
 function undo() {
   const n = tree.current(game);
-  if (n.parent === null) return;
+  if (n.parent === null || reviewing) return;
   cancelEngine();
   const steps = game.twoSides || n.by !== "engine" ? 1 : 2;
   let target = n;
@@ -674,6 +745,7 @@ function openGame(next) {
   dismissedGameOver.clear();
   redo = null;
   lineTip = null;
+  reviewing = false;
   game = next;
   orientation = game.playerColor;
   prefs.elo = game.elo;
@@ -749,7 +821,7 @@ function setPeeking(on) {
   if (peeking === on) return;
   peeking = on;
   renderAnalysis();
-  if (on && !analysisCache.has(analysisKey(game.currentId))) scheduleAnalysis();
+  if (on && !analysisCache.has(analysisKey(analysedId()))) scheduleAnalysis();
 }
 
 // Touch equivalent of the held right click: a still long press on the board (spec 002 §9).
@@ -793,11 +865,36 @@ function bindLongPress() {
 }
 
 function toggleAnalysis() {
+  if (reviewing) return;
   updatePrefs({ showAnalysis: !prefs.showAnalysis });
+}
+
+// Leaving the review goes back to the game where it stands: the end of the displayed line (spec 004 §1).
+function toggleReview() {
+  cancelEngine();
+  reviewing = !reviewing;
+  if (!reviewing) {
+    game.currentId = displayedLine().at(-1);
+    persist();
+  }
+  render();
+  scheduleAnalysis();
+  maybeEngineMove();
+}
+
+// Leaves the review just before `played`, my turn again; `uci` plays an alternative at once (spec 004).
+function replay(played, uci = null) {
+  reviewing = false;
+  game.currentId = played.parent;
+  persist();
+  if (uci) return playMove(uci, "me");
+  render();
+  scheduleAnalysis();
 }
 
 // I take over Stockfish's colour and it takes over mine, from the displayed position (spec 002 §7).
 function swapSides() {
+  if (reviewing) return;
   cancelEngine();
   game.playerColor = game.playerColor === "white" ? "black" : "white";
   orientation = game.playerColor;
@@ -808,6 +905,7 @@ function swapSides() {
 }
 
 function toggleTwoSides() {
+  if (reviewing) return;
   cancelEngine();
   game.twoSides = !game.twoSides;
   persist();
@@ -962,6 +1060,7 @@ const SHORTCUTS = {
   b: toggleBestMoves,
   " ": toggleBestMoves,
   a: toggleAnalysis,
+  r: toggleReview,
   t: toggleTwoSides,
   c: swapSides,
   f: flip,
@@ -982,6 +1081,7 @@ function bind() {
   $("btn-bookmark").onclick = toggleBookmark;
   $("btn-best").onclick = toggleBestMoves;
   $("btn-analysis").onclick = toggleAnalysis;
+  $("btn-review").onclick = toggleReview;
   $("btn-two-sides").onclick = toggleTwoSides;
   $("btn-swap").onclick = swapSides;
 
@@ -990,6 +1090,7 @@ function bind() {
     if (id) goTo(id);
   };
 
+  $("board").addEventListener("click", onReviewBoardClick);
   $("btn-settings").onclick = openSettings;
   // Capture phase: chessground never sees the right press, so it draws no circle or arrow.
   $("board").addEventListener(
