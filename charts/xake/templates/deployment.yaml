@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "xake.fullname" . }}
+  labels:
+    {{- include "xake.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "xake.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "xake.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "xake.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.xake.image.repository }}:{{ .Values.xake.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.xake.image.pullPolicy }}
+          env:
+            - name: LOGURU_LEVEL
+              value: {{ .Values.xake.logLevel | quote }}
+            - name: XAKE_DEFAULT_LANGUAGE
+              value: {{ .Values.xake.defaultLanguage | quote }}
+            - name: XAKE_PLAY_POOL_SIZE
+              value: {{ .Values.xake.playPoolSize | quote }}
+            - name: XAKE_ANALYSE_POOL_SIZE
+              value: {{ .Values.xake.analysePoolSize | quote }}
+            - name: XAKE_ENGINE_THREADS
+              value: {{ .Values.xake.engineThreads | quote }}
+            - name: XAKE_ENGINE_HASH_MB
+              value: {{ .Values.xake.engineHashMb | quote }}
+            - name: XAKE_PLAY_MOVETIME_MS
+              value: {{ .Values.xake.playMovetimeMs | quote }}
+            - name: XAKE_ANALYSE_MOVETIME_MS
+              value: {{ .Values.xake.analyseMovetimeMs | quote }}
+            - name: XAKE_MAX_MOVETIME_MS
+              value: {{ .Values.xake.maxMovetimeMs | quote }}
+            - name: XAKE_ACQUIRE_TIMEOUT_S
+              value: {{ .Values.xake.acquireTimeoutS | quote }}
+            {{- with .Values.xake.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          # /api/version never touches an engine: a busy pool must not restart the pod
+          livenessProbe:
+            httpGet:
+              path: /api/version
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /api/version
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- with .Values.volumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

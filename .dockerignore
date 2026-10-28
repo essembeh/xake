@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+build/
+dist/
+
+# Tools
+.env
+.envrc
+.direnv/
+.venv/
+.python-version
+.mypy_cache/
+.ruff_cache/
+shell.nix
+
+# Tests and coverage
+tests/
+.coverage
+.pytest_cache/
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Docker
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# Git
+.git
+.gitignore
+
+# CI/CD, chart, docs and tooling: not part of the image
+.github/
+charts/
+docs/
+scripts/

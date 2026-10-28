@@ -1,0 +1,128 @@
+# Default values for xake.
+
+replicaCount: 1
+
+xake:
+  image:
+    repository: ghcr.io/essembeh/xake
+    # tag: main
+    pullPolicy: IfNotPresent
+  logLevel: INFO
+  # XAKE_DEFAULT_LANGUAGE: UI language (en or fr) until a user picks one in the settings
+  defaultLanguage: en
+
+  # --- Engine settings: each value maps to one XAKE_* environment variable
+
+  # XAKE_PLAY_POOL_SIZE: Stockfish processes playing the opponent moves
+  playPoolSize: 1
+  # XAKE_ANALYSE_POOL_SIZE: Stockfish processes for analysis, best moves and the eval timeline
+  analysePoolSize: 2
+  # XAKE_ENGINE_THREADS: threads per Stockfish process
+  engineThreads: 1
+  # XAKE_ENGINE_HASH_MB: hash table per Stockfish process, in MB
+  engineHashMb: 64
+  # XAKE_PLAY_MOVETIME_MS: thinking time of the opponent per move
+  playMovetimeMs: 300
+  # XAKE_ANALYSE_MOVETIME_MS: analysis time per position (best moves, eval bar)
+  analyseMovetimeMs: 500
+  # XAKE_MAX_MOVETIME_MS: upper bound on any time asked by a client, the only CPU guard without auth
+  maxMovetimeMs: 3000
+  # XAKE_ACQUIRE_TIMEOUT_S: how long a request waits for a free engine before a 503
+  acquireTimeoutS: 10
+
+  # Additional environment variables for the container
+  extraEnv: []
+  # - name: XAKE_STOCKFISH_PATH
+  #   value: /usr/games/stockfish
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # The application never talks to the Kubernetes API
+  automount: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# The image runs as an unprivileged user and only writes to /tmp (an emptyDir)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    {}
+    # The API is open: anyone reaching it spends the cluster CPU, an auth in front is advised
+    # traefik.ingress.kubernetes.io/router.middlewares: auth-forward-auth@kubernetescrd
+    # nginx.ingress.kubernetes.io/auth-url: https://auth.example.com/oauth2/auth
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  # Each Stockfish process holds ~330Mi (NNUE network + hash): with the default pools (1 + 2),
+  # ~1Gi for the engines plus ~100Mi for Python. Raise memory with the pool sizes or the hash.
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    # no cpu limit on purpose: a search is a short CPU burst, throttling only makes it weaker
+    memory: 1536Mi
+
+# The pods share nothing: games live in the browsers, any pod can answer any request
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

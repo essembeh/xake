@@ -1,0 +1,70 @@
+[project]
+name = "xake"
+version = "0.1.0"
+description = "Learn chess by playing against Stockfish, with live analysis"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+authors = [{ name = "Sébastien MB", email = "seb@essembeh.org" }]
+# NixOS stable Python; bump together with .python-version and the Dockerfile.
+requires-python = ">=3.13"
+dependencies = [
+    "chess>=1.11.2",
+    "fastapi>=0.162.0",
+    "loguru>=0.7.3",
+    "pydantic-settings>=2.16.1",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+xake = "xake.webapp:run"
+
+[build-system]
+# Must contain the uv version used to build, otherwise uv fetches a stale uv-build from PyPI.
+requires = ["uv_build>=0.11.21,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16.0",
+    "mypy>=2.4.0",
+    "pip-audit>=2.10.1",
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.4.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.3",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "SIM",   # flake8-simplify
+    "RUF",   # ruff-specific rules
+    "ASYNC", # flake8-async
+    "S",     # flake8-bandit
+]
+
+[tool.ruff.lint.per-file-ignores]
+# `assert` is pytest's normal mechanism, not a production assert.
+"tests/**" = ["S101"]
+
+[tool.mypy]
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "module"
+
+[tool.coverage.run]
+source = ["xake"]
