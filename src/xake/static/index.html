@@ -59,6 +59,9 @@
         <span>Xake</span>
       </div>
       <span class="spacer"></span>
+      <button id="btn-rage" class="tb-btn rage" data-i18n-title="tb.rageTitle" hidden>
+        <i class="rage-icon" aria-hidden="true">😤</i><span data-i18n="tb.rage">Rage quit</span>
+      </button>
       <button id="btn-new" class="tb-btn" data-i18n-title="tb.newTitle">
         <svg><use href="#i-plus" /></svg><span data-i18n="tb.new">New game</span>
       </button>
@@ -199,6 +202,10 @@
       <label class="field inline">
         <input id="sound-input" type="checkbox" />
         <span data-i18n="settings.sound">Sounds</span>
+      </label>
+      <label class="field inline">
+        <input id="rage-input" type="checkbox" />
+        <span data-i18n="settings.rage">"Rage quit" button, when you are losing</span>
       </label>
     </dialog>
 

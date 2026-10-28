@@ -55,6 +55,8 @@ No sign-up, no account: open the page and play.
 - **Keyboard shortcuts** for everything (`?` lists them).
 - **Themes**: light / dark / auto, 6 boards, 4 piece sets, all under free licences; **English and French**.
 - **Sounds** for moves, captures, checks and the end of the game, can be muted in the settings.
+- **Rage quit** 😤 (can be turned off in the settings): shows up when the evaluation turns against
+  you, to start over and forget the game. Calm, then orange, then red and shaking as your position gets worse.
 - **Mobile first**: touch friendly layout, installable on the iOS / Android home screen (PWA).
 
 | Game analysis | Game over |

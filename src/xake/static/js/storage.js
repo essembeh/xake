@@ -16,6 +16,7 @@ export const DEFAULT_PREFS = {
   pieceSet: "cburnett",
   coordinates: true,
   sound: true,
+  rageQuit: true,
   playerColor: "white",
 };
 

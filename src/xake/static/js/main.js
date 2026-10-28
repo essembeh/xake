@@ -18,6 +18,9 @@ const PV_PLIES = 10;
 const LONG_PRESS_MS = 800;
 const LONG_PRESS_SLOP_PX = 10;
 const ARROW_HIT_SQUARES = 0.4;
+// My winning chances (%) below which the rage quit button turns orange, then red.
+const RAGE_ORANGE_PERCENT = 30;
+const RAGE_RED_PERCENT = 12;
 // One colour per best-move rank, shared by the arrows and the list badges (spec 002 §3).
 const RANK_COLORS = ["#2e9e3e", "#2f6fd6", "#e8890c", "#9b4fc9", "#6b6b6b"];
 const ROLE_NAMES = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen" };
@@ -180,6 +183,31 @@ function render() {
   renderAnalysis();
   renderTimelineCard();
   renderGameOver(n, chess);
+  renderRage();
+}
+
+// The worse my position on the evaluation bar, the angrier the button; useless when I am not behind (spec 002 §11).
+function rageLevel() {
+  const percent = analysisPercent(analysisCache.get(analysisKey(game.currentId)) || evals.get(game.currentId));
+  if (percent === null || reviewing) return null;
+  const mine = game.playerColor === "white" ? percent : 100 - percent;
+  if (mine >= 50) return null;
+  return mine < RAGE_RED_PERCENT ? "red" : mine < RAGE_ORANGE_PERCENT ? "orange" : "calm";
+}
+
+function renderRage() {
+  const button = $("btn-rage");
+  const level = prefs.rageQuit ? rageLevel() : null;
+  button.hidden = !level;
+  button.dataset.level = level || "";
+}
+
+// Starts over with the same colour and level, the current game is deleted, not saved.
+function rageQuit() {
+  if (!rageLevel()) return;
+  storage.deleteGame(game.id);
+  startNewGame(prefs.playerColor, game.elo);
+  toast(t("rage.done"));
 }
 
 function renderStrips(n, turn) {
@@ -528,7 +556,7 @@ async function runAnalysis(id) {
 
 // Evaluates the displayed line one position at a time for the timeline (spec 002 §4).
 async function pumpEvals() {
-  if (evalBusy || !judging()) return;
+  if (evalBusy || !(judging() || prefs.rageQuit)) return;
   const id = displayedLine().find((nodeId) => !evals.has(nodeId));
   if (!id) return;
   evalBusy = true;
@@ -546,6 +574,7 @@ async function pumpEvals() {
   if (game.id !== gameId || ctrl.signal.aborted) return;
   renderMoves();
   renderTimelineCard();
+  renderRage();
   if (failed) {
     clearTimeout(evalRetryTimer);
     evalRetryTimer = setTimeout(pumpEvals, 5000);
@@ -957,6 +986,7 @@ function syncSettings() {
   $("elo-value").textContent = game.elo;
   $("coordinates-input").checked = prefs.coordinates;
   $("sound-input").checked = prefs.sound;
+  $("rage-input").checked = prefs.rageQuit;
   segmented($("multipv-input"), [1, 2, 3, 4, 5].map((v) => [v, String(v)]), prefs.multipv, (v) => updatePrefs({ multipv: v }));
   segmented($("language-input"), Object.entries(LANGUAGES), language(), (v) => updatePrefs({ language: v }));
   segmented(
@@ -1128,6 +1158,11 @@ function bind() {
   $("new-elo-input").oninput = (event) => ($("new-elo-value").textContent = event.target.value);
   $("coordinates-input").onchange = (event) => updatePrefs({ coordinates: event.target.checked });
   $("sound-input").onchange = (event) => updatePrefs({ sound: event.target.checked });
+  $("rage-input").onchange = (event) => {
+    updatePrefs({ rageQuit: event.target.checked });
+    pumpEvals();
+  };
+  $("btn-rage").onclick = rageQuit;
 
   $("color-input").onclick = (event) => {
     const value = event.target.closest("button")?.dataset.value;

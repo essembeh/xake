@@ -215,6 +215,44 @@ kbd {
   display: none;
 }
 
+/* Rage quit: calm when slightly behind, then orange, then red and shaking (spec 002 §11). */
+.rage-icon {
+  font-style: normal;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tb-btn.rage[data-level="orange"] {
+  color: var(--mistake);
+  border-color: var(--mistake);
+}
+
+.tb-btn.rage[data-level="red"] {
+  color: #fff;
+  background: var(--blunder);
+  border-color: var(--blunder);
+  animation: rage-shake 0.6s ease-in-out infinite;
+}
+
+@keyframes rage-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px) rotate(-2deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(2deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tb-btn.rage[data-level="red"] {
+    animation: none;
+  }
+}
+
 .icon-btn {
   width: 44px;
   padding: 0;
