@@ -27,7 +27,7 @@ _Xake_ means "chess" in Basque.
   variations included, fits in the URL.
 - **Keyboard shortcuts** for everything (`?` lists them).
 - **Themes**: light / dark / auto, 6 boards, 4 piece sets, all under free licences; **English and French**.
-- **Sounds** for moves, captures, checks and the end of the game, muted with one tap (top right).
+- **Sounds** for moves, captures, checks and the end of the game, can be muted in the settings.
 - **Mobile first**: touch friendly layout, installable on the iOS / Android home screen (PWA).
 
 | Evaluation graph | Game over |

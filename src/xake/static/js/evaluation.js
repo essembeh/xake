@@ -30,6 +30,9 @@ export const JUDGEMENTS = [
   { key: "inaccuracy", glyph: "?!", loss: 5 },
 ];
 
+// My move matching Stockfish's first choice; shown as a dot, not a glyph.
+export const BEST = { key: "best", glyph: "" };
+
 // `mover` is the colour that played the move between the two evaluations.
 export function judge(before, after, mover) {
   if (before === null || after === null) return null;

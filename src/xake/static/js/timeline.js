@@ -49,7 +49,7 @@ export function renderTimeline(container, points, currentIndex, onSelect) {
     // Kept inside the box: the first/last move and decisive evals sit on an edge, where the dot would be clipped.
     dot.style.left = `${Math.max(2, Math.min(98, (x(i) / W) * 100))}%`;
     dot.style.top = `${Math.max(6, Math.min(94, (y(p.percent) / H) * 100))}%`;
-    dot.title = `${p.label} ${p.judgement.glyph} — ${t(`judgement.${p.judgement.key}`)}`;
+    dot.title = `${[p.label, p.judgement.glyph].filter(Boolean).join(" ")} — ${t(`judgement.${p.judgement.key}`)}`;
     dot.onclick = (event) => {
       event.stopPropagation();
       onSelect(p.id);

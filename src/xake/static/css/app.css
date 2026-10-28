@@ -12,6 +12,7 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
   --eval-black: #3a3734;
   --eval-white: #f7f7f7;
+  --best: #2e9e3e;
   --inaccuracy: #56b4e9;
   --mistake: #e69f00;
   --blunder: #df5353;
@@ -955,6 +956,22 @@ cg-board square.check {
 
 .tl-dot:active:not(:disabled) {
   transform: translate(-50%, -50%);
+}
+
+.tl-dot.best,
+.dot.best {
+  background: var(--best);
+}
+
+/* Zero net width (7 - 9 + 2): hangs in the left padding so the SAN column stays aligned. */
+.best-mark {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 2px 0 -9px;
+  border-radius: 50%;
+  background: var(--best);
+  vertical-align: middle;
 }
 
 .tl-dot.inaccuracy,

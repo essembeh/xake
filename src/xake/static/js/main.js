@@ -1,7 +1,7 @@
 import { Chessground } from "../vendor/chessground/chessground.min.js";
 import { validateFen } from "../vendor/chess.js/chess.js";
 import * as api from "./api.js";
-import { analysisPercent, formatScore, judge, materialDiff } from "./evaluation.js";
+import { BEST, analysisPercent, formatScore, judge, materialDiff } from "./evaluation.js";
 import { LANGUAGES, language, serverDefault, setLanguage, sideName, t } from "./i18n.js";
 import { exportPgn, importPgn } from "./pgn.js";
 import * as storage from "./storage.js";
@@ -101,8 +101,10 @@ function cancelEngine() {
   thinking = false;
 }
 
+// Best move first: depths differ between evaluations, so the top move may still show a small loss (spec 002 §4).
 function judgementOf(n) {
   if (!prefs.showAnalysis || n.parent === null) return null;
+  if (n.by === "me" && evals.get(n.parent)?.lines?.[0]?.uci === n.uci) return BEST;
   return judge(percentOf(n.parent), percentOf(n.id), turnOfFen(tree.node(game, n.parent).fen));
 }
 
@@ -238,9 +240,6 @@ function renderControls() {
 }
 
 function renderToggles() {
-  $("btn-sound").setAttribute("aria-pressed", String(prefs.sound));
-  $("btn-sound").title = t(prefs.sound ? "tb.soundOn" : "tb.soundOff");
-  $("btn-sound").querySelector("use").setAttribute("href", prefs.sound ? "#i-sound" : "#i-mute");
   $("btn-best").setAttribute("aria-pressed", String(prefs.showBestMoves));
   $("btn-analysis").setAttribute("aria-pressed", String(prefs.showAnalysis));
   $("btn-two-sides").setAttribute("aria-pressed", String(game.twoSides));
@@ -251,7 +250,8 @@ function moveLabelEl(n, prefix) {
   out.dataset.id = n.id;
   if (n.id === game.currentId) out.classList.add("current");
   const judgement = judgementOf(n);
-  if (judgement) out.append(el("sup", { className: `glyph ${judgement.key}`, textContent: judgement.glyph, title: t(`judgement.${judgement.key}`) }));
+  if (judgement === BEST) out.prepend(el("i", { className: "best-mark", title: t("judgement.best") }));
+  else if (judgement) out.append(el("sup", { className: `glyph ${judgement.key}`, textContent: judgement.glyph, title: t(`judgement.${judgement.key}`) }));
   if (game.bookmarks.some((b) => b.nodeId === n.id)) out.classList.add("bookmarked");
   return out;
 }
@@ -885,6 +885,7 @@ function syncSettings() {
   $("elo-input").value = game.elo;
   $("elo-value").textContent = game.elo;
   $("coordinates-input").checked = prefs.coordinates;
+  $("sound-input").checked = prefs.sound;
   segmented($("multipv-input"), [1, 2, 3, 4, 5].map((v) => [v, String(v)]), prefs.multipv, (v) => updatePrefs({ multipv: v }));
   segmented($("language-input"), Object.entries(LANGUAGES), language(), (v) => updatePrefs({ language: v }));
   segmented(
@@ -1017,7 +1018,6 @@ function bind() {
   window.addEventListener("mouseup", (event) => event.button === 2 && setPeeking(false));
   window.addEventListener("blur", () => setPeeking(false));
   bindLongPress();
-  $("btn-sound").onclick = () => updatePrefs({ sound: !prefs.sound });
   $("btn-new").onclick = openNewGame;
   $("btn-help").onclick = () => $("sheet-help").showModal();
   $("btn-games").onclick = () => {
@@ -1039,6 +1039,7 @@ function bind() {
   };
   $("new-elo-input").oninput = (event) => ($("new-elo-value").textContent = event.target.value);
   $("coordinates-input").onchange = (event) => updatePrefs({ coordinates: event.target.checked });
+  $("sound-input").onchange = (event) => updatePrefs({ sound: event.target.checked });
 
   $("color-input").onclick = (event) => {
     const value = event.target.closest("button")?.dataset.value;
