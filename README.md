@@ -8,6 +8,15 @@
 
 _Xake_ means "chess" in Basque.
 
+## 🚀 Try the demo
+
+**https://xake.onrender.com**
+
+> This demo is a public instance hosted on [Render](https://render.com/), shared by everyone: the
+> engine may be slower when several people play at once. It comes without any guarantee and can be
+> limited or stopped at any time. Your games stay in your browser, nothing is stored on the server;
+> to keep a game, export it as PGN or [install your own](#install).
+
 ![Desktop: best moves on demand, numbered arrows, variations and bookmarks](docs/screenshots/desktop-best-moves.png)
 
 ## Features
