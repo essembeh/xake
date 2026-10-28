@@ -868,21 +868,24 @@ cg-board square.check {
   color: var(--blunder);
 }
 
-.variations {
-  grid-column: 1 / -1;
-  margin: 2px 0 4px;
-  padding: 4px 8px;
-  border-left: 3px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 0 6px 6px 0;
-  font-size: 13px;
-  line-height: 1.9;
+.alts {
+  margin-right: auto;
   color: var(--muted);
+  font-size: 12px;
 }
 
-.variation {
-  display: block;
-  margin-left: 12px;
+.alts .mv {
+  padding: 1px 4px;
+  font-weight: 400;
+  text-decoration: underline dotted;
+}
+
+.alts .best-mark {
+  margin: 0 2px 0 0;
+}
+
+.moves .cell .mv:first-child {
+  flex: none;
 }
 
 /* ---- Timeline ---- */

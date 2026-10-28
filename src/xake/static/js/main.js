@@ -43,6 +43,7 @@ let redo = null;
 let evalBusy = false;
 let evalCtrl = null;
 let evalRetryTimer = null;
+let lineTip = null;
 const analysisCache = new Map();
 // Best available evaluation per node: quick timeline pass, overridden by full analyses.
 const evals = new Map();
@@ -108,14 +109,11 @@ function judgementOf(n) {
   return judge(percentOf(n.parent), percentOf(n.id), turnOfFen(tree.node(game, n.parent).fen));
 }
 
-// Root, path to the current node, then the main line continuing from it.
+// Root to the end of the line being browsed: it stays put while going back along it (spec 002 §10).
 function displayedLine() {
-  const out = [game.rootId, ...tree.path(game, game.currentId).map((n) => n.id)];
-  for (let n = tree.current(game); n.children.length; ) {
-    n = tree.node(game, n.children[0]);
-    out.push(n.id);
-  }
-  return out;
+  const kept = lineTip in game.nodes && tree.isAncestor(game, game.currentId, lineTip);
+  lineTip = tree.mainlineEnd(game, kept ? lineTip : game.currentId).id;
+  return [game.rootId, ...tree.path(game, lineTip).map((n) => n.id)];
 }
 
 function gameOverInfo(chess) {
@@ -256,40 +254,24 @@ function moveLabelEl(n, prefix) {
   return out;
 }
 
-// Inline rendering for variations, nested in parentheses-like blocks.
-function renderInline(fromId, container, forceNumber) {
-  let n = tree.node(game, fromId);
-  let needNumber = forceNumber;
-  while (n.children.length) {
-    const [main, ...alternatives] = n.children.map((id) => tree.node(game, id));
-    const [, turn, , , , number] = n.fen.split(" ");
-    const prefix = turn === "w" ? `${number}. ` : needNumber ? `${number}… ` : "";
-    container.append(moveLabelEl(main, prefix), " ");
-    needNumber = false;
-    for (const alt of alternatives) {
-      const variation = el("span", { className: "variation" });
-      const altPrefix = turn === "w" ? `${number}. ` : `${number}… `;
-      variation.append(moveLabelEl(alt, altPrefix), " ");
-      renderInline(alt.id, variation, false);
-      container.append(variation);
-      needNumber = true;
-    }
-    n = main;
-  }
-}
-
-// Main line as a number / White / Black table; variations are inserted under their branch point.
+// The browsed line only, as a number / White / Black table; each move lists its alternatives, a tap switches to one.
 function renderMoves() {
   const box = $("moves");
   box.replaceChildren();
-  let n = tree.node(game, game.rootId);
-  if (!n.children.length) {
+  const line = displayedLine();
+  if (line.length === 1) {
     box.append(el("p", { className: "empty", textContent: t("moves.empty") }));
     return;
   }
   let rowOpen = false;
   const cell = (node) => {
     const out = el("div", { className: "cell" }, moveLabelEl(node, ""));
+    const alternatives = tree.node(game, node.parent).children.filter((id) => id !== node.id);
+    if (alternatives.length) {
+      const alts = el("span", { className: "alts" }, el("span", { textContent: t("moves.or") }));
+      for (const id of alternatives) alts.append(" ", moveLabelEl(tree.node(game, id), ""));
+      out.append(alts);
+    }
     const percent = percentOf(node.id);
     if (prefs.showAnalysis && percent !== null) {
       const evalText = formatScore(evals.get(node.id)?.score) || evals.get(node.id)?.outcome?.result || "";
@@ -297,30 +279,17 @@ function renderMoves() {
     }
     return out;
   };
-  while (n.children.length) {
-    const [main, ...alternatives] = n.children.map((id) => tree.node(game, id));
-    const [, turn, , , , number] = n.fen.split(" ");
+  for (const id of line.slice(1)) {
+    const n = tree.node(game, id);
+    const [, turn, , , , number] = tree.node(game, n.parent).fen.split(" ");
     if (turn === "w") {
-      box.append(el("div", { className: "num", textContent: number }), cell(main));
+      box.append(el("div", { className: "num", textContent: number }), cell(n));
       rowOpen = true;
     } else {
       if (!rowOpen) box.append(el("div", { className: "num", textContent: number }), el("div", { className: "cell filler", textContent: "…" }));
-      box.append(cell(main));
+      box.append(cell(n));
       rowOpen = false;
     }
-    if (alternatives.length) {
-      if (rowOpen) box.append(el("div", { className: "cell filler", textContent: "…" }));
-      rowOpen = false;
-      const block = el("div", { className: "variations" });
-      for (const alt of alternatives) {
-        const line = el("div", { className: "variation-line" });
-        line.append(moveLabelEl(alt, turn === "w" ? `${number}. ` : `${number}… `), " ");
-        renderInline(alt.id, line, false);
-        block.append(line);
-      }
-      box.append(block);
-    }
-    n = main;
   }
   if (rowOpen) box.append(el("div", { className: "cell filler" }));
   keepCurrentMoveVisible(box);
@@ -687,7 +656,10 @@ function toggleBookmark() {
 function step(direction) {
   const n = tree.current(game);
   if (direction < 0 && n.parent !== null) goTo(n.parent);
-  if (direction > 0 && n.children.length) goTo(n.children[0]);
+  if (direction > 0 && n.children.length) {
+    const line = displayedLine();
+    goTo(line[line.indexOf(n.id) + 1]);
+  }
 }
 
 function openGame(next) {
@@ -701,6 +673,7 @@ function openGame(next) {
   evals.clear();
   dismissedGameOver.clear();
   redo = null;
+  lineTip = null;
   game = next;
   orientation = game.playerColor;
   prefs.elo = game.elo;
@@ -985,7 +958,7 @@ const SHORTCUTS = {
   ArrowLeft: () => step(-1),
   ArrowRight: () => step(1),
   ArrowUp: () => goTo(game.rootId),
-  ArrowDown: () => goTo(tree.mainlineEnd(game, game.currentId).id),
+  ArrowDown: () => goTo(displayedLine().at(-1)),
   b: toggleBestMoves,
   " ": toggleBestMoves,
   a: toggleAnalysis,
@@ -1004,7 +977,7 @@ function bind() {
   $("btn-first").onclick = () => goTo(game.rootId);
   $("btn-prev").onclick = () => step(-1);
   $("btn-next").onclick = () => step(1);
-  $("btn-last").onclick = () => goTo(tree.mainlineEnd(game, game.currentId).id);
+  $("btn-last").onclick = () => goTo(displayedLine().at(-1));
   $("btn-undo").onclick = undo;
   $("btn-bookmark").onclick = toggleBookmark;
   $("btn-best").onclick = toggleBestMoves;

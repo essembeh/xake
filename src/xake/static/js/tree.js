@@ -65,6 +65,11 @@ export function mainlineEnd(game, id = game.rootId) {
   return n;
 }
 
+export function isAncestor(game, ancestorId, id) {
+  for (let n = game.nodes[id]; n; n = game.nodes[n.parent]) if (n.id === ancestorId) return true;
+  return false;
+}
+
 
 // Detaches the subtree rooted at `id`; returns what restoreSubtree needs.
 export function removeSubtree(game, id) {

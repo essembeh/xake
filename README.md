@@ -42,7 +42,7 @@ No sign-up, no account: open the page and play.
 - **Evaluation bar** next to the board and an **evaluation graph** of the whole game (`A`), with
   inaccuracies `?!`, mistakes `?` and blunders `??` marked on the graph and in the move list.
 - **Variations**: go back anywhere and play another move, nothing is lost; the move list shows the
-  variations under the move they replace.
+  line you browse, each move lists its alternatives (`e6 or Bf5`), a tap switches to one.
 - **Bookmarks** (`M`) to jump back to a position and try another idea.
 - **Take back** (`U`) with redo, **swap sides with Stockfish** (`C`) or **play both sides** (`T`)
   to force the opponent move and study a precise position.
