@@ -416,7 +416,7 @@ function renderAnalysis() {
   let shapes = [];
   if (visible) {
     if (played) lines.append(reviewHead(played));
-    const playable = played ? isMine(played) : canUserMove(tree.chessAt(game, n.id));
+    const playable = played !== null || canUserMove(tree.chessAt(game, n.id));
     if (analysis?.outcome) {
       lines.append(el("div", { className: "line muted", textContent: t("lines.gameOver") }));
     } else if (analysis) {
@@ -648,10 +648,10 @@ function distanceToSegment([px, py], [ax, ay], [bx, by]) {
   return Math.hypot(px - ax - k * dx, py - ay - k * dy);
 }
 
-// In review, a click on an alternative's arrow plays it instead of my move; overlapping arrows go to the best rank.
+// In review, a click on an alternative's arrow plays it instead of the played move; overlapping arrows go to the best rank.
 function onReviewBoardClick(event) {
   const played = reviewing ? tree.current(game) : null;
-  if (!played || played.parent === null || !isMine(played)) return;
+  if (!played || played.parent === null) return;
   const lines = analysisCache.get(analysisKey(played.parent))?.lines;
   if (!lines) return;
   const rect = $("board").getBoundingClientRect();
@@ -882,7 +882,7 @@ function toggleReview() {
   maybeEngineMove();
 }
 
-// Leaves the review just before `played`, my turn again; `uci` plays an alternative at once (spec 004).
+// Leaves the review just before `played`; `uci` plays an alternative at once, mine or in Stockfish's place (spec 004).
 function replay(played, uci = null) {
   reviewing = false;
   game.currentId = played.parent;

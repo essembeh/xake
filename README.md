@@ -43,8 +43,8 @@ No sign-up, no account: open the page and play.
   `??` marked in the move list.
 - **Game analysis** (`R`): an evaluation graph of the whole game, the judged moves highlighted, and
   for each move, yours or Stockfish's, the best moves that could have been played instead.
-  **Replay this move** (or a tap on an alternative, in the list or on its arrow) takes you back
-  just before one of your moves to try something else; **Back to the game** returns to the last move.
+  **Replay this move** takes you back just before one of your moves; a tap on an alternative, in
+  the list or on its arrow, plays it instead, yours or Stockfish's; **Back to the game** returns to the last move.
 - **Variations**: go back anywhere and play another move, nothing is lost; the move list shows the
   line you browse, each move lists its alternatives (`e6 or Bf5`), a tap switches to one.
 - **Bookmarks** (`M`) to jump back to a position and try another idea.

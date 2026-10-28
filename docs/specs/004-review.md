@@ -49,7 +49,10 @@
   On vise la flèche entière, pas la case d'arrivée : deux alternatives vers la même case se
   distinguent par leur départ. Flèches superposées (deux pièces alignées vers la même case) : la
   mieux classée gagne, l'autre reste jouable par sa partie propre ou par le panneau.
-- Sur un coup de Stockfish : lignes non cliquables (je ne joue pas ses coups), bouton **Jouer à
+- Sur un coup de Stockfish : ses alternatives sont cliquables aussi (panneau ou flèche), pour voir
+  ce que la partie serait devenue s'il avait mieux (ou moins bien) joué. Le coup est joué à sa
+  place depuis la position d'avant (comme remplacer un coup depuis l'historique, spec 001 §6.5) :
+  la partie reprend en mode jeu, à moi de jouer. Bouton **Jouer à
   partir d'ici** : quitte l'analyse sur la position après ce coup, à moi de jouer. L'échiquier y
   est jouable : y jouer un coup quitte aussi l'analyse.
 - Ces boutons sont en style primaire, en tête du panneau : la sortie de l'analyse doit se voir.
