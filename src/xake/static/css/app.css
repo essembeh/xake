@@ -175,7 +175,26 @@ kbd {
 }
 
 .brand img {
-  border-radius: 7px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --topbar-h: 76px;
+  }
+
+  .brand {
+    gap: 14px;
+    font-size: 24px;
+  }
+
+  .brand img {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+  }
 }
 
 .tb-btn {
