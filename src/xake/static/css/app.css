@@ -657,7 +657,8 @@ cg-board square.check {
   min-height: 46px;
 }
 
-.ctrl:disabled {
+.ctrl:disabled,
+.games-list li button:disabled {
   opacity: 0.35;
   cursor: default;
 }

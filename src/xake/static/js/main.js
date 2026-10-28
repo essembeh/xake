@@ -968,11 +968,11 @@ function renderGamesList() {
     };
     const share = el("button", { textContent: "⤓", title: t("games.export") });
     share.onclick = () => sharePgn(g);
-    const remove = el("button", { textContent: "✕", title: t("bookmark.delete") });
+    // The current game cannot be deleted: it would come back at once as an empty game (spec 001 §6.7).
+    const isCurrent = g.id === game.id;
+    const remove = el("button", { textContent: "✕", disabled: isCurrent, title: t(isCurrent ? "games.deleteCurrent" : "bookmark.delete") });
     remove.onclick = () => {
-      if (!confirm(t("games.confirmDelete"))) return;
       storage.deleteGame(g.id);
-      if (g.id === game.id) openGame(tree.newGame({ playerColor: game.playerColor, elo: prefs.elo }));
       renderGamesList();
     };
     list.append(el("li", { className: g.id === game.id ? "current" : "" }, open, rename, share, remove));
