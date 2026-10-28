@@ -25,7 +25,8 @@ application.
 | `xake.image.tag` | `appVersion` of the chart | |
 | `xake.image.pullPolicy` | `IfNotPresent` | |
 | `xake.logLevel` | `INFO` | `LOGURU_LEVEL` |
-| `xake.defaultLanguage` | `en` | `XAKE_DEFAULT_LANGUAGE`: `en` or `fr`, each user can still switch in the settings |
+| `xake.defaultElo` | `1500` | `XAKE_DEFAULT_ELO`: Stockfish level of a first visit (400 to 3190), then each browser remembers the last level chosen |
+| `xake.defaultLanguage` | `en` | `XAKE_DEFAULT_LANGUAGE`: `en` or `fr`, for browsers in another language; each user can still switch in the settings |
 | `xake.playPoolSize` | `1` | `XAKE_PLAY_POOL_SIZE` |
 | `xake.analysePoolSize` | `2` | `XAKE_ANALYSE_POOL_SIZE` |
 | `xake.engineThreads` | `1` | `XAKE_ENGINE_THREADS` |

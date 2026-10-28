@@ -3,12 +3,16 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ..elo import MAX_ELO, MIN_ELO
+
 
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="XAKE_", env_file=".env", extra="ignore")
 
     # UI language until the user picks one in the settings (spec 003).
     default_language: Literal["en", "fr"] = "en"
+    # Stockfish level of a first visit; then each browser remembers the last level chosen (spec 001 §6.1).
+    default_elo: int = Field(default=1500, ge=MIN_ELO, le=MAX_ELO)
     stockfish_path: str = "stockfish"
     play_pool_size: int = Field(default=1, ge=1)
     analyse_pool_size: int = Field(default=2, ge=1)

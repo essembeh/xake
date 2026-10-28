@@ -42,6 +42,8 @@ spec:
               value: {{ .Values.xake.logLevel | quote }}
             - name: XAKE_DEFAULT_LANGUAGE
               value: {{ .Values.xake.defaultLanguage | quote }}
+            - name: XAKE_DEFAULT_ELO
+              value: {{ .Values.xake.defaultElo | quote }}
             - name: XAKE_PLAY_POOL_SIZE
               value: {{ .Values.xake.playPoolSize | quote }}
             - name: XAKE_ANALYSE_POOL_SIZE

@@ -53,7 +53,7 @@ No sign-up, no account: open the page and play.
 - **Saved games** in the browser, **PGN** export / import, and **shareable links**: the whole game,
   variations included, fits in the URL.
 - **Keyboard shortcuts** for everything (`?` lists them).
-- **Themes**: light / dark / auto, 6 boards, 4 piece sets, all under free licences; **English and French**.
+- **Themes**: light / dark / auto, 6 boards, 4 piece sets, all under free licences; **English and French**, following the browser language.
 - **Sounds** for moves, captures, checks and the end of the game, can be muted in the settings.
 - **Rage quit** 😤 (can be turned off in the settings): shows up when the evaluation turns against
   you, to start over and forget the game. Calm, then orange, then red and shaking as your position gets worse.
@@ -118,7 +118,8 @@ $ just webapp   # http://localhost:8000, also reachable from your LAN
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `XAKE_DEFAULT_LANGUAGE` | `en` | UI language (`en`, `fr`) until a user picks one in the settings |
+| `XAKE_DEFAULT_ELO` | `1500` | Stockfish level (400 to 3190) of a first visit, then each browser remembers the last level chosen |
+| `XAKE_DEFAULT_LANGUAGE` | `en` | UI language (`en`, `fr`) for browsers in another language, until a user picks one in the settings |
 | `XAKE_STOCKFISH_PATH` | `stockfish` | Stockfish binary (`/usr/games/stockfish` in the image) |
 | `XAKE_PLAY_POOL_SIZE` | `1` | Stockfish processes playing the opponent moves |
 | `XAKE_ANALYSE_POOL_SIZE` | `2` | Stockfish processes for best moves, evaluation bar and graph |

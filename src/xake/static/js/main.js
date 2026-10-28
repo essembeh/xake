@@ -2,7 +2,7 @@ import { Chessground } from "../vendor/chessground/chessground.min.js";
 import { validateFen } from "../vendor/chess.js/chess.js";
 import * as api from "./api.js";
 import { BEST, analysisPercent, formatScore, judge, materialDiff } from "./evaluation.js";
-import { LANGUAGES, language, serverDefault, setLanguage, sideName, t } from "./i18n.js";
+import { LANGUAGES, defaultLanguage, language, setLanguage, sideName, t } from "./i18n.js";
 import { exportPgn, importPgn } from "./pgn.js";
 import * as storage from "./storage.js";
 import { BOARD_THEMES, PIECE_SETS, UI_THEMES, applyThemes, pieceUrl } from "./themes.js";
@@ -1232,7 +1232,7 @@ function registerServiceWorker() {
 }
 
 applyThemes(prefs);
-setLanguage(prefs.language || serverDefault());
+setLanguage(prefs.language || defaultLanguage());
 $("app-version").textContent = window.XAKE_CONFIG?.version ? `v${window.XAKE_CONFIG.version}` : "";
 const shared = readSharedGame();
 if (shared) {

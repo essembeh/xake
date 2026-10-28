@@ -5,7 +5,8 @@ const PREFS_KEY = `${PREFIX}prefs`;
 const CURRENT_KEY = `${PREFIX}current`;
 
 export const DEFAULT_PREFS = {
-  elo: 1500,
+  // XAKE_DEFAULT_ELO, injected by /config.js; the level chosen afterwards is stored with the prefs.
+  elo: window.XAKE_CONFIG?.defaultElo ?? 1500,
   multipv: 3,
   showAnalysis: true,
   showBestMoves: false,

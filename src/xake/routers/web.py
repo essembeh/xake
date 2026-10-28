@@ -12,7 +12,11 @@ router = APIRouter()
 async def config_js(request: Request) -> Response:
     """Service settings the front-end needs before its first paint (spec 003)."""
     settings: AppSettings = request.app.state.settings
-    config = {"defaultLanguage": settings.default_language, "version": metadata.version("xake")}
+    config = {
+        "defaultLanguage": settings.default_language,
+        "defaultElo": settings.default_elo,
+        "version": metadata.version("xake"),
+    }
     return Response(
         f"window.XAKE_CONFIG = {json.dumps(config)};\n",
         media_type="text/javascript",

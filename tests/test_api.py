@@ -101,7 +101,7 @@ def test_config_js_default_language(client: TestClient) -> None:
     response = client.get("/config.js")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/javascript")
-    assert response.text.startswith('window.XAKE_CONFIG = {"defaultLanguage": "en", "version": ')
+    assert response.text.startswith('window.XAKE_CONFIG = {"defaultLanguage": "en", "defaultElo": 1500, "version": ')
 
 
 def test_index_loads_config_before_main(client: TestClient) -> None:

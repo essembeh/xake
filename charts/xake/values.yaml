@@ -8,8 +8,10 @@ xake:
     # tag: main
     pullPolicy: IfNotPresent
   logLevel: INFO
-  # XAKE_DEFAULT_LANGUAGE: UI language (en or fr) until a user picks one in the settings
+  # XAKE_DEFAULT_LANGUAGE: UI language (en or fr) for browsers in another language, until a user picks one
   defaultLanguage: en
+  # XAKE_DEFAULT_ELO: Stockfish level of a first visit (400 to 3190), then each browser remembers its own
+  defaultElo: 1500
 
   # --- Engine settings: each value maps to one XAKE_* environment variable
 

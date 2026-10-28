@@ -329,7 +329,13 @@ let current = "en";
 export const language = () => current;
 
 // Service default (XAKE_DEFAULT_LANGUAGE, injected by /config.js), then English.
-export const serverDefault = () => (DICT[window.XAKE_CONFIG?.defaultLanguage] ? window.XAKE_CONFIG.defaultLanguage : "en");
+const serverDefault = () => (DICT[window.XAKE_CONFIG?.defaultLanguage] ? window.XAKE_CONFIG.defaultLanguage : "en");
+
+// Until the user picks one: the browser's first supported language, else the service default (spec 003 §3).
+export function defaultLanguage() {
+  const preferred = (navigator.languages?.length ? navigator.languages : [navigator.language]).map((tag) => tag?.split("-")[0]);
+  return preferred.find((lang) => DICT[lang]) ?? serverDefault();
+}
 
 export function t(key, params = {}) {
   const text = DICT[current][key] ?? DICT.en[key] ?? key;
