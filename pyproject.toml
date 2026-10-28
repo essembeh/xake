@@ -1,6 +1,6 @@
 [project]
 name = "xake"
-version = "0.1.0"
+version = "0.1.1"
 description = "Learn chess by playing against Stockfish, with live analysis"
 readme = "README.md"
 license = "GPL-3.0-or-later"
