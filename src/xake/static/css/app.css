@@ -479,6 +479,11 @@ cg-board square.check {
   opacity: 0.9;
 }
 
+/* Long press shows the best moves (spec 002 §9): no iOS callout on the board. */
+.cg-wrap {
+  -webkit-touch-callout: none;
+}
+
 .cg-wrap .cg-shapes text,
 .cg-wrap .cg-custom-svgs text {
   font-weight: 800;

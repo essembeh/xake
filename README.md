@@ -13,8 +13,9 @@ _Xake_ means "chess" in Basque.
 ## Features
 
 - **Opponent at any level**: Stockfish from 400 to 3190 Elo, adjustable at any time during a game.
-- **Best moves on demand** (`B`): up to 5 Stockfish lines, numbered and colour-coded arrows on the
-  board, the same numbers in the list; tap a line to play it.
+- **Best moves on demand** (`B`, or hold a right click / long press on the board): up to 5
+  Stockfish lines, numbered and colour-coded arrows on the board, the same numbers in the list;
+  tap a line to play it.
 - **Evaluation bar** next to the board and an **evaluation graph** of the whole game (`A`), with
   inaccuracies `?!`, mistakes `?` and blunders `??` marked on the graph and in the move list.
 - **Variations**: go back anywhere and play another move, nothing is lost; the move list shows the

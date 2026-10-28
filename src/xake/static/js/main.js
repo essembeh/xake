@@ -15,6 +15,8 @@ const ENGINE_MIN_DELAY_MS = 300;
 const ANALYSIS_DEBOUNCE_MS = 120;
 const TIMELINE_MOVETIME_MS = 150;
 const PV_PLIES = 10;
+const LONG_PRESS_MS = 800;
+const LONG_PRESS_SLOP_PX = 10;
 // One colour per best-move rank, shared by the arrows and the list badges (spec 002 §3).
 const RANK_COLORS = ["#2e9e3e", "#2f6fd6", "#e8890c", "#9b4fc9", "#6b6b6b"];
 const ROLE_NAMES = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen" };
@@ -45,6 +47,8 @@ const analysisCache = new Map();
 // Best available evaluation per node: quick timeline pass, overridden by full analyses.
 const evals = new Map();
 const dismissedGameOver = new Set();
+// Best moves shown while the right button is held on the board (spec 002 §9).
+let peeking = false;
 
 const brushes = Object.fromEntries(
   RANK_COLORS.map((color, i) => [`rank${i + 1}`, { key: `r${i + 1}`, color, opacity: i === 0 ? 0.95 : 0.85, lineWidth: i === 0 ? 13 : 10 }]),
@@ -68,7 +72,8 @@ const turnOfFen = (fen) => (fen.split(" ")[1] === "w" ? "white" : "black");
 const position = (id) => ({ start_fen: game.startFen, moves: tree.ucis(game, id) });
 const analysisKey = (id) => `${id}:${prefs.multipv}`;
 const percentOf = (id) => analysisPercent(evals.get(id));
-const wantsAnalysis = () => prefs.showAnalysis || prefs.showBestMoves;
+const showsBestMoves = () => prefs.showBestMoves || peeking;
+const wantsAnalysis = () => prefs.showAnalysis || showsBestMoves();
 const anyDialogOpen = () => document.querySelector("dialog[open]") !== null;
 
 function dests(chess) {
@@ -395,10 +400,10 @@ function renderAnalysis() {
   renderEvalBar(analysis || evals.get(n.id));
 
   const lines = $("lines");
-  lines.hidden = !prefs.showBestMoves;
+  lines.hidden = !showsBestMoves();
   lines.replaceChildren();
   let shapes = [];
-  if (prefs.showBestMoves) {
+  if (showsBestMoves()) {
     if (analysis?.outcome) {
       lines.append(el("div", { className: "line muted", textContent: t("lines.gameOver") }));
     } else if (analysis) {
@@ -767,6 +772,53 @@ function toggleBestMoves() {
   updatePrefs({ showBestMoves: !prefs.showBestMoves });
 }
 
+function setPeeking(on) {
+  if (peeking === on) return;
+  peeking = on;
+  renderAnalysis();
+  if (on && !analysisCache.has(analysisKey(game.currentId))) scheduleAnalysis();
+}
+
+// Touch equivalent of the held right click: a still long press on the board (spec 002 §9).
+function bindLongPress() {
+  let timer = null;
+  let origin = null;
+  const cancel = () => {
+    clearTimeout(timer);
+    timer = null;
+  };
+  $("board").addEventListener(
+    "touchstart",
+    (event) => {
+      cancel();
+      if (event.touches.length !== 1) return;
+      origin = [event.touches[0].clientX, event.touches[0].clientY];
+      // A tap that plays a move detaches its target: touchend then only reaches that element.
+      for (const type of ["touchend", "touchcancel"]) event.target.addEventListener(type, release, { once: true, passive: true });
+      timer = setTimeout(() => {
+        timer = null;
+        // Drops the selection or drag started by the press, so lifting the finger plays nothing.
+        cg.cancelMove();
+        setPeeking(true);
+      }, LONG_PRESS_MS);
+    },
+    { passive: true },
+  );
+  document.addEventListener(
+    "touchmove",
+    (event) => {
+      const touch = event.touches[0];
+      if (timer && touch && Math.hypot(touch.clientX - origin[0], touch.clientY - origin[1]) > LONG_PRESS_SLOP_PX) cancel();
+    },
+    { capture: true, passive: true },
+  );
+  const release = () => {
+    cancel();
+    setPeeking(false);
+  };
+  for (const type of ["touchend", "touchcancel"]) document.addEventListener(type, release, { capture: true, passive: true });
+}
+
 function toggleAnalysis() {
   updatePrefs({ showAnalysis: !prefs.showAnalysis });
 }
@@ -951,6 +1003,20 @@ function bind() {
   };
 
   $("btn-settings").onclick = openSettings;
+  // Capture phase: chessground never sees the right press, so it draws no circle or arrow.
+  $("board").addEventListener(
+    "mousedown",
+    (event) => {
+      if (event.button !== 2) return;
+      event.stopPropagation();
+      event.preventDefault();
+      setPeeking(true);
+    },
+    { capture: true },
+  );
+  window.addEventListener("mouseup", (event) => event.button === 2 && setPeeking(false));
+  window.addEventListener("blur", () => setPeeking(false));
+  bindLongPress();
   $("btn-sound").onclick = () => updatePrefs({ sound: !prefs.sound });
   $("btn-new").onclick = openNewGame;
   $("btn-help").onclick = () => $("sheet-help").showModal();
