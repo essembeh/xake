@@ -944,13 +944,27 @@ function renderGamesList() {
     const { plies, result } = tree.summary(g);
     const open = el("button", { className: "open" });
     const date = new Date(g.updatedAt).toLocaleString(language(), { dateStyle: "short", timeStyle: "short" });
+    const defaultTitle = t("games.title", { side: sideName(g.playerColor), elo: g.elo });
     open.append(
-      el("span", { textContent: t("games.title", { side: sideName(g.playerColor), elo: g.elo }) }),
+      el("span", { textContent: g.name || defaultTitle }),
       el("small", { textContent: t("games.summary", { date, moves: Math.ceil(plies / 2), result: result || t("games.ongoing") }) }),
     );
     open.onclick = () => {
       openGame(storage.loadGame(g.id) || g);
       $("sheet-games").close();
+    };
+    const rename = el("button", { textContent: "✎", title: t("games.rename") });
+    rename.onclick = () => {
+      const name = prompt(t("games.renamePrompt"), g.name || defaultTitle);
+      if (name === null) return;
+      // An empty name, or the default title itself, restores the generated title.
+      const value = name.trim() === defaultTitle ? "" : name.trim();
+      if (!storage.renameGame(g.id, value)) return toast(t("app.saveFailed"));
+      if (g.id === game.id) {
+        if (value) game.name = value;
+        else delete game.name;
+      }
+      renderGamesList();
     };
     const share = el("button", { textContent: "⤓", title: t("games.export") });
     share.onclick = () => sharePgn(g);
@@ -961,7 +975,7 @@ function renderGamesList() {
       if (g.id === game.id) openGame(tree.newGame({ playerColor: game.playerColor, elo: prefs.elo }));
       renderGamesList();
     };
-    list.append(el("li", { className: g.id === game.id ? "current" : "" }, open, share, remove));
+    list.append(el("li", { className: g.id === game.id ? "current" : "" }, open, rename, share, remove));
   }
 }
 

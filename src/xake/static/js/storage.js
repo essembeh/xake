@@ -66,6 +66,15 @@ export function listGames() {
   return out.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
+// Leaves updatedAt and the current game alone: renaming does not reorder the list nor open the game.
+export function renameGame(id, name) {
+  const game = loadGame(id);
+  if (!game) return false;
+  if (name) game.name = name;
+  else delete game.name;
+  return write(GAME_PREFIX + id, game);
+}
+
 export function deleteGame(id) {
   try {
     localStorage.removeItem(GAME_PREFIX + id);

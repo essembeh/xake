@@ -41,7 +41,7 @@ export function exportPgn(game) {
   const pgnResult = result === "½-½" ? "1/2-1/2" : result || "*";
   const engine = `Stockfish (${game.elo})`;
   const tags = {
-    Event: "xake",
+    Event: game.name || "xake",
     Date: new Date(game.createdAt).toISOString().slice(0, 10).replace(/-/g, "."),
     White: game.playerColor === "white" ? "Me" : engine,
     Black: game.playerColor === "black" ? "Me" : engine,
@@ -63,6 +63,7 @@ export function importPgn(text, elo) {
   const startFen = headers.FEN && headers.FEN !== START_FEN ? headers.FEN : null;
   const playerColor = headers.Black === "Me" ? "black" : "white";
   const game = newGame({ playerColor, startFen, elo });
+  if (headers.Event && headers.Event !== "xake" && headers.Event !== "?") game.name = headers.Event;
   const fenToNode = new Map([[game.nodes.root.fen, game.rootId]]);
   let parentId = game.rootId;
   for (const move of chess.history({ verbose: true })) {
