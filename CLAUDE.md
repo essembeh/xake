@@ -27,8 +27,8 @@ before changing a behaviour, update it when a decision changes.
   - `js/storage.js`: `localStorage`, keys `xake:v1:*`, one key per game.
   - `js/i18n.js`: `en`/`fr` dictionaries, `t()`, `data-i18n*` attributes in `index.html`.
   - `js/share.js`: game ⇄ URL fragment; `js/pgn.js`: PGN export/import (import = main line only).
-  - `js/evaluation.js`, `js/timeline.js`, `js/themes.js`, `js/api.js`.
-  - `vendor/`: chessground, chess.js and Lichess piece sets, pinned and fetched by
+  - `js/evaluation.js`, `js/timeline.js`, `js/themes.js`, `js/sounds.js`, `js/api.js`.
+  - `vendor/`: chessground, chess.js and Lichess piece sets (free licences only), pinned and fetched by
     `scripts/vendor.sh` (`just vendor`) with curl. Never edit by hand.
   - `sw.js`: network-first service worker (app shell offline, API never cached).
 - **Deployment**: `Dockerfile` (uv multi-stage, Stockfish from Debian at `/usr/games/stockfish`),
@@ -55,6 +55,10 @@ The `Justfile` is the project interface:
 
 ## Environment gotchas
 
+- "Start the dev server": run `just webapp` in the background, then open the page in Firefox on the
+  machine's LAN IP, never `localhost`:
+  `firefox "http://$(ip -4 route get 1.1.1.1 | grep -oP 'src \K\S+'):8000/"`. Plain HTTP on a
+  non-localhost address is not a secure context: no service worker, no clipboard API.
 - Stockfish comes from `shell.nix` (direnv: `use nix`). Outside the nix shell, set
   `XAKE_STOCKFISH_PATH`; without a binary the API tests are **skipped**, not failed.
 - Tests use the real engine, no mocks: keep assertions robust to engine variance (scores,

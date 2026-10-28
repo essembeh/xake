@@ -7,6 +7,7 @@ import { exportPgn, importPgn } from "./pgn.js";
 import * as storage from "./storage.js";
 import { BOARD_THEMES, PIECE_SETS, UI_THEMES, applyThemes, pieceUrl } from "./themes.js";
 import { gameFromHash, gameToUrl } from "./share.js";
+import * as sounds from "./sounds.js";
 import { renderTimeline } from "./timeline.js";
 import * as tree from "./tree.js";
 
@@ -229,6 +230,9 @@ function renderControls() {
 }
 
 function renderToggles() {
+  $("btn-sound").setAttribute("aria-pressed", String(prefs.sound));
+  $("btn-sound").title = t(prefs.sound ? "tb.soundOn" : "tb.soundOff");
+  $("btn-sound").querySelector("use").setAttribute("href", prefs.sound ? "#i-sound" : "#i-mute");
   $("btn-best").setAttribute("aria-pressed", String(prefs.showBestMoves));
   $("btn-analysis").setAttribute("aria-pressed", String(prefs.showAnalysis));
   $("btn-two-sides").setAttribute("aria-pressed", String(game.twoSides));
@@ -567,6 +571,10 @@ function playMove(uci, by) {
   const n = tree.addMove(game, game.currentId, uci, by, by === "engine" ? { elo: game.elo } : {});
   game.currentId = n.id;
   redo = null;
+  if (prefs.sound) {
+    const over = gameOverInfo(tree.chessAt(game, n.id));
+    sounds.play(sounds.soundFor(n.san, over, game.twoSides ? null : game.playerColor));
+  }
   persist();
   render();
   scheduleAnalysis();
@@ -940,6 +948,7 @@ function bind() {
   };
 
   $("btn-settings").onclick = openSettings;
+  $("btn-sound").onclick = () => updatePrefs({ sound: !prefs.sound });
   $("btn-new").onclick = openNewGame;
   $("btn-help").onclick = () => $("sheet-help").showModal();
   $("btn-games").onclick = () => {
@@ -1039,6 +1048,7 @@ if (shared) {
   prefs.elo = game.elo;
 }
 bind();
+sounds.unlockOnGesture();
 syncSettings();
 persist();
 render();

@@ -26,6 +26,7 @@ _Xake_ means "chess" in Basque.
   variations included, fits in the URL.
 - **Keyboard shortcuts** for everything (`?` lists them).
 - **Themes**: light / dark / auto, 6 boards, 4 piece sets, all under free licences; **English and French**.
+- **Sounds** for moves, captures, checks and the end of the game, muted with one tap (top right).
 - **Mobile first**: touch friendly layout, installable on the iOS / Android home screen (PWA).
 
 | Evaluation graph | Game over |
@@ -109,9 +110,28 @@ $ just screenshots  # regenerate the README screenshots from a running `just web
 $ just vendor       # refresh the pinned front-end libraries and piece sets
 ```
 
+# Libraries and assets
+
+Every dependency and bundled asset is under a free licence compatible with the GPLv3.
+
+| Component | Used for | Licence |
+| --- | --- | --- |
+| [Stockfish](https://stockfishchess.org/) | chess engine (opponent and analysis) | GPL-3.0 |
+| [python-chess](https://python-chess.readthedocs.io/) | UCI driver, move validation on the backend | GPL-3.0-or-later |
+| [FastAPI](https://fastapi.tiangolo.com/) / [Starlette](https://www.starlette.io/) | HTTP API and static files | MIT / BSD-3-Clause |
+| [Uvicorn](https://www.uvicorn.org/) | ASGI server | BSD-3-Clause |
+| [Pydantic](https://docs.pydantic.dev/) / [pydantic-settings](https://github.com/pydantic/pydantic-settings) | API models, `XAKE_*` settings | MIT |
+| [Loguru](https://github.com/Delgan/loguru) | logging | MIT |
+| [chessground](https://github.com/lichess-org/chessground) | board (vendored) | GPL-3.0 |
+| [chess.js](https://github.com/jhlywa/chess.js) | rules, SAN, PGN in the browser (vendored) | BSD-2-Clause |
+| [Lichess](https://github.com/lichess-org/lila) piece sets | `cburnett`, `merida` / `mpchess` / `pixel` (vendored) | GPLv2+ / GPLv3+ / AGPLv3+ |
+
+Front-end assets are pinned and fetched by [`scripts/vendor.sh`](scripts/vendor.sh), with the
+lila [`COPYING.md`](src/xake/static/vendor/pieces/COPYING.md) that lists their authors and licences.
+Several Lichess piece sets are not free and are left out. The boards are plain CSS colours and the
+sounds are synthesized in the browser (WebAudio), no audio file is bundled.
+
 # License
 
-Xake is released under the [GPL-3.0-or-later](LICENSE), like chessground and Stockfish.
-The piece sets come from [Lichess](https://github.com/lichess-org/lila) and are all free:
-`cburnett` and `merida` GPLv2+, `mpchess` GPLv3+, `pixel` AGPLv3+, see
-[`COPYING.md`](src/xake/static/vendor/pieces/COPYING.md). The boards are plain CSS colours.
+Xake is released under the [GPL-3.0-or-later](LICENSE), like chessground and Stockfish. The
+AGPLv3+ `pixel` piece set keeps its own licence, as allowed by section 13 of the GPLv3.

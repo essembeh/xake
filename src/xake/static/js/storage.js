@@ -15,6 +15,7 @@ export const DEFAULT_PREFS = {
   boardTheme: "brown",
   pieceSet: "cburnett",
   coordinates: true,
+  sound: true,
   playerColor: "white",
 };
 
