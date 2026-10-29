@@ -1,8 +1,8 @@
 apiVersion: v2
 name: xake
 type: application
-version: 0.2.3
-appVersion: 0.2.3
+version: 0.2.4
+appVersion: 0.2.4
 description: Learn chess against Stockfish at any Elo, with live analysis
 home: https://github.com/essembeh/xake
 icon: https://raw.githubusercontent.com/essembeh/xake/main/src/xake/static/icons/icon-192.png
