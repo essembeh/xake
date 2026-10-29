@@ -104,6 +104,26 @@ def test_config_js_default_language(client: TestClient) -> None:
     assert response.text.startswith('window.XAKE_CONFIG = {"defaultLanguage": "en", "defaultElo": 1500, "version": ')
 
 
+@mark.parametrize(
+    "path",
+    [
+        "/apple-touch-icon.png",
+        "/apple-touch-icon-precomposed.png",
+        "/apple-touch-icon-240x240.png",
+        "/apple-touch-icon-240x240-precomposed.png",
+        "/favicon.ico",
+    ],
+)
+def test_root_icons(client: TestClient, path: str) -> None:
+    response = client.get(path)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+
+
+def test_unknown_apple_touch_variant(client: TestClient) -> None:
+    assert client.get("/apple-touch-icon-foo.png").status_code == 404
+
+
 def test_index_loads_config_before_main(client: TestClient) -> None:
     html = client.get("/").text
     assert html.index('src="config.js"') < html.index('src="js/main.js"')
