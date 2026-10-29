@@ -220,10 +220,19 @@
       <form id="new-game-form">
         <div class="field">
           <span data-i18n="new.iPlay">I play</span>
-          <div class="segmented" id="color-input">
-            <button type="button" data-value="white" data-i18n="side.white">White</button>
-            <button type="button" data-value="random" data-i18n="new.random">Random</button>
-            <button type="button" data-value="black" data-i18n="side.black">Black</button>
+          <div class="color-tiles" id="color-input">
+            <button type="button" data-value="white">
+              <span class="piece"><img data-piece="white" alt="" /></span>
+              <span data-i18n="side.white">White</span>
+            </button>
+            <button type="button" data-value="random">
+              <span class="piece half"><img data-piece="white" alt="" /><img data-piece="black" alt="" /></span>
+              <span data-i18n="new.random">Random</span>
+            </button>
+            <button type="button" data-value="black">
+              <span class="piece"><img data-piece="black" alt="" /></span>
+              <span data-i18n="side.black">Black</span>
+            </button>
           </div>
         </div>
         <label class="field">

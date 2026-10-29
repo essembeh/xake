@@ -1034,6 +1034,9 @@ function renderColorChoice() {
   for (const button of $("color-input").querySelectorAll("button")) {
     button.setAttribute("aria-pressed", String(button.dataset.value === newGameColor));
   }
+  for (const img of $("color-input").querySelectorAll("img[data-piece]")) {
+    img.src = pieceUrl(prefs.pieceSet, img.dataset.piece, "pawn");
+  }
 }
 
 function openNewGame() {

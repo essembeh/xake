@@ -1330,6 +1330,52 @@ cg-board square.check {
   box-shadow: var(--shadow);
 }
 
+.color-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.color-tiles button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 8px;
+  border-width: 2px;
+}
+
+.color-tiles button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+
+/* Same board-square badge as the captured pieces, the black pawn would vanish on the dark theme */
+.color-tiles .piece {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--captured-bg);
+}
+
+.color-tiles .piece img {
+  position: absolute;
+  inset: 3px;
+  width: calc(100% - 6px);
+  height: calc(100% - 6px);
+}
+
+/* Random: white pawn on the left half, black pawn on the right half */
+.color-tiles .piece.half img:first-child {
+  clip-path: inset(0 50% 0 0);
+}
+
+.color-tiles .piece.half img:last-child {
+  clip-path: inset(0 0 0 50%);
+}
+
 .swatches button[aria-pressed="true"],
 .piece-sets button[aria-pressed="true"] {
   outline: 3px solid var(--accent);
