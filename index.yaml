@@ -2,6 +2,26 @@ apiVersion: v1
 entries:
   xake:
   - apiVersion: v2
+    appVersion: 0.2.5
+    created: "2026-10-29T17:49:00.482811427Z"
+    description: Learn chess against Stockfish at any Elo, with live analysis
+    digest: f448a6e0d68661b15a1fe888428d051a48cc47b686258e299ba422572182d77a
+    home: https://github.com/essembeh/xake
+    icon: https://raw.githubusercontent.com/essembeh/xake/main/src/xake/static/icons/icon-192.png
+    keywords:
+    - chess
+    - stockfish
+    maintainers:
+    - email: essembeh@users.noreply.github.com
+      name: Sébastien MB
+    name: xake
+    sources:
+    - https://github.com/essembeh/xake
+    type: application
+    urls:
+    - https://github.com/essembeh/xake/releases/download/xake-0.2.5/xake-0.2.5.tgz
+    version: 0.2.5
+  - apiVersion: v2
     appVersion: 0.2.4
     created: "2026-10-29T09:15:56.165329774Z"
     description: Learn chess against Stockfish at any Elo, with live analysis
@@ -181,4 +201,4 @@ entries:
     urls:
     - https://github.com/essembeh/xake/releases/download/xake-0.1.0/xake-0.1.0.tgz
     version: 0.1.0
-generated: "2026-10-29T09:15:56.165364459Z"
+generated: "2026-10-29T17:49:00.482844357Z"
