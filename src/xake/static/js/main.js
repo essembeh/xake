@@ -211,7 +211,7 @@ function rageQuit() {
 }
 
 function renderStrips(n, turn) {
-  const { score, pieces } = materialDiff(n.fen);
+  const { score, captured } = materialDiff(n.fen);
   const strip = (color) => {
     const isEngine = !game.twoSides && color !== game.playerColor;
     const name = game.twoSides ? sideName(color) : isEngine ? "Stockfish" : t("strip.you");
@@ -224,8 +224,14 @@ function renderStrips(n, turn) {
     }
     const material = el("span", { className: "material" });
     const opponent = color === "white" ? "black" : "white";
-    for (const role of pieces[color]) {
-      material.append(el("img", { src: pieceUrl(prefs.pieceSet, opponent, ROLE_NAMES[role]), alt: "" }));
+    if (captured[color].length) {
+      const taken = el("span", { className: "captured" });
+      for (const [i, role] of captured[color].entries()) {
+        const img = el("img", { src: pieceUrl(prefs.pieceSet, opponent, ROLE_NAMES[role]), alt: "" });
+        if (i && role !== captured[color][i - 1]) img.className = "new-role";
+        taken.append(img);
+      }
+      material.append(taken);
     }
     const advantage = color === "white" ? score : -score;
     if (advantage > 0) material.append(el("b", { textContent: `+${advantage}` }));

@@ -2,6 +2,7 @@
   --bg: #f3f1ed;
   --surface: #ffffff;
   --surface-2: #ece9e3;
+  --captured-bg: var(--sq-light);
   --fg: #22201c;
   --muted: #74706a;
   --accent: #3d8a2e;
@@ -31,6 +32,7 @@
     --bg: #161512;
     --surface: #23211e;
     --surface-2: #2e2b28;
+  --captured-bg: var(--sq-dark);
     --fg: #e8e6e3;
     --muted: #9b968f;
     --accent: #6aac2c;
@@ -46,6 +48,7 @@
   --bg: #161512;
   --surface: #23211e;
   --surface-2: #2e2b28;
+  --captured-bg: var(--sq-dark);
   --fg: #e8e6e3;
   --muted: #9b968f;
   --accent: #6aac2c;
@@ -484,14 +487,31 @@ kbd {
   gap: 0;
 }
 
-.strip .material img {
-  width: 20px;
-  height: 20px;
-  margin-right: -6px;
+/* A board square colour behind the pieces: they read as on the board, in both themes */
+.strip .captured {
+  display: flex;
+  align-items: center;
+  padding: 1px 6px 1px 4px;
+  border-radius: 999px;
+  background: var(--captured-bg);
+}
+
+.strip .captured img {
+  width: 22px;
+  height: 22px;
+  margin-left: -9px;
+}
+
+.strip .captured img:first-child {
+  margin-left: 0;
+}
+
+.strip .captured img.new-role {
+  margin-left: -2px;
 }
 
 .strip .material b {
-  margin-left: 10px;
+  margin-left: 8px;
   font-size: 13px;
 }
 

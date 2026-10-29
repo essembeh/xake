@@ -41,19 +41,23 @@ export function judge(before, after, mover) {
 }
 
 const VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+const START_COUNTS = { q: 1, r: 2, b: 2, n: 2, p: 8 };
 
-// Material imbalance from a FEN: pieces White has in excess (positive) or Black (negative).
+// Material balance from a FEN: White's lead in points (negative when Black leads) and, per side,
+// the opponent pieces it captured (missing from the start set; a promoted pawn counts as taken).
 export function materialDiff(fen) {
   const counts = {};
   for (const ch of fen.split(" ")[0]) {
     if (/[pnbrqPNBRQ]/.test(ch)) counts[ch] = (counts[ch] || 0) + 1;
   }
-  const pieces = { white: [], black: [] };
+  const captured = { white: [], black: [] };
   let score = 0;
   for (const role of ["q", "r", "b", "n", "p"]) {
-    const diff = (counts[role.toUpperCase()] || 0) - (counts[role] || 0);
-    score += diff * VALUES[role];
-    for (let i = 0; i < Math.abs(diff); i++) pieces[diff > 0 ? "white" : "black"].push(role);
+    const white = counts[role.toUpperCase()] || 0;
+    const black = counts[role] || 0;
+    score += (white - black) * VALUES[role];
+    for (let i = black; i < START_COUNTS[role]; i++) captured.white.push(role);
+    for (let i = white; i < START_COUNTS[role]; i++) captured.black.push(role);
   }
-  return { score, pieces };
+  return { score, captured };
 }
