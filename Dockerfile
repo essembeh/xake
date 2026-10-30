@@ -44,15 +44,13 @@ RUN uv sync --locked --no-dev --no-editable
 ## Stage: production
 FROM base AS production
 
-# Stockfish from Debian: built for every architecture of the base image, NNUE network included.
-RUN apt-get update && apt-get install -y --no-install-recommends tini stockfish && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT ["tini", "--"]
 
 USER app
 COPY --from=builder --chown=app:app /app/.venv /app/.venv
 # PATH is enough: the package is installed in the venv, no PYTHONPATH needed.
-ENV PATH="/app/.venv/bin:$PATH" \
-    XAKE_STOCKFISH_PATH=/usr/games/stockfish
+ENV PATH="/app/.venv/bin:$PATH"
 
 
 #########################################

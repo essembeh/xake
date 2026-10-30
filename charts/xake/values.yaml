@@ -12,30 +12,13 @@ xake:
   defaultLanguage: en
   # XAKE_DEFAULT_ELO: Stockfish level of a first visit (400 to 3190), then each browser remembers its own
   defaultElo: 1500
-
-  # --- Engine settings: each value maps to one XAKE_* environment variable
-
-  # XAKE_PLAY_POOL_SIZE: Stockfish processes playing the opponent moves
-  playPoolSize: 1
-  # XAKE_ANALYSE_POOL_SIZE: Stockfish processes for analysis, best moves and the eval timeline
-  analysePoolSize: 2
-  # XAKE_ENGINE_THREADS: threads per Stockfish process
-  engineThreads: 1
-  # XAKE_ENGINE_HASH_MB: hash table per Stockfish process, in MB
-  engineHashMb: 64
-  # XAKE_PLAY_MOVETIME_MS: thinking time of the opponent per move
+  # XAKE_PLAY_MOVETIME_MS: thinking time of the opponent per move (Stockfish runs in each player's browser)
   playMovetimeMs: 300
-  # XAKE_ANALYSE_MOVETIME_MS: analysis time per position (best moves, eval bar)
-  analyseMovetimeMs: 500
-  # XAKE_MAX_MOVETIME_MS: upper bound on any time asked by a client, the only CPU guard without auth
-  maxMovetimeMs: 3000
-  # XAKE_ACQUIRE_TIMEOUT_S: how long a request waits for a free engine before a 503
-  acquireTimeoutS: 10
 
   # Additional environment variables for the container
   extraEnv: []
-  # - name: XAKE_STOCKFISH_PATH
-  #   value: /usr/games/stockfish
+  # - name: XAKE_DEFAULT_ELO
+  #   value: "1200"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -94,14 +77,12 @@ ingress:
   #      - chart-example.local
 
 resources:
-  # Each Stockfish process holds ~330Mi (NNUE network + hash): with the default pools (1 + 2),
-  # ~1Gi for the engines plus ~100Mi for Python. Raise memory with the pool sizes or the hash.
+  # Stockfish runs in the players' browsers: the pod only serves static files and /config.js
   requests:
-    cpu: 500m
-    memory: 1Gi
+    cpu: 20m
+    memory: 96Mi
   limits:
-    # no cpu limit on purpose: a search is a short CPU burst, throttling only makes it weaker
-    memory: 1536Mi
+    memory: 192Mi
 
 # The pods share nothing: games live in the browsers, any pod can answer any request
 autoscaling:

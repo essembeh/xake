@@ -5,6 +5,5 @@ pkgs.mkShell {
   packages = [
     pkgs.uv
     pkgs.just
-    pkgs.stockfish
   ];
 }

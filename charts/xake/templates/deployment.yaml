@@ -44,22 +44,8 @@ spec:
               value: {{ .Values.xake.defaultLanguage | quote }}
             - name: XAKE_DEFAULT_ELO
               value: {{ .Values.xake.defaultElo | quote }}
-            - name: XAKE_PLAY_POOL_SIZE
-              value: {{ .Values.xake.playPoolSize | quote }}
-            - name: XAKE_ANALYSE_POOL_SIZE
-              value: {{ .Values.xake.analysePoolSize | quote }}
-            - name: XAKE_ENGINE_THREADS
-              value: {{ .Values.xake.engineThreads | quote }}
-            - name: XAKE_ENGINE_HASH_MB
-              value: {{ .Values.xake.engineHashMb | quote }}
             - name: XAKE_PLAY_MOVETIME_MS
               value: {{ .Values.xake.playMovetimeMs | quote }}
-            - name: XAKE_ANALYSE_MOVETIME_MS
-              value: {{ .Values.xake.analyseMovetimeMs | quote }}
-            - name: XAKE_MAX_MOVETIME_MS
-              value: {{ .Values.xake.maxMovetimeMs | quote }}
-            - name: XAKE_ACQUIRE_TIMEOUT_S
-              value: {{ .Values.xake.acquireTimeoutS | quote }}
             {{- with .Values.xake.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -67,11 +53,6 @@ spec:
             - name: http
               containerPort: 8000
               protocol: TCP
-          # /api/version never touches an engine: a busy pool must not restart the pod
-          livenessProbe:
-            httpGet:
-              path: /api/version
-              port: http
           readinessProbe:
             httpGet:
               path: /api/version

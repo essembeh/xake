@@ -1,7 +1,7 @@
 import { Chessground } from "../vendor/chessground/chessground.min.js";
 import { validateFen } from "../vendor/chess.js/chess.js";
-import * as api from "./api.js";
-import { BEST, analysisPercent, formatScore, judge, materialDiff } from "./evaluation.js";
+import * as engine from "./engine.js";
+import { BEST, analysisPercent, formatScore, gameEnding, judge, materialDiff } from "./evaluation.js";
 import { LANGUAGES, defaultLanguage, language, setLanguage, sideName, t } from "./i18n.js";
 import { exportPgn, importPgn } from "./pgn.js";
 import * as storage from "./storage.js";
@@ -13,7 +13,6 @@ import * as tree from "./tree.js";
 
 const ENGINE_MIN_DELAY_MS = 300;
 const ANALYSIS_DEBOUNCE_MS = 120;
-const TIMELINE_MOVETIME_MS = 150;
 const PV_PLIES = 10;
 const LONG_PRESS_MS = 800;
 const LONG_PRESS_SLOP_PX = 10;
@@ -47,6 +46,10 @@ let redo = null;
 let evalBusy = false;
 let evalCtrl = null;
 let evalRetryTimer = null;
+// Consecutive timeline failures: the retry backs off, then gives up until the next change
+let evalFailures = 0;
+const EVAL_RETRY_MS = 5000;
+const EVAL_MAX_FAILURES = 4;
 let lineTip = null;
 // Game review mode (spec 004): graph, judged moves and alternatives, the engine never plays.
 let reviewing = false;
@@ -130,16 +133,10 @@ function displayedLine() {
 }
 
 function gameOverInfo(chess) {
-  if (chess.isCheckmate()) {
-    const winner = colorOf(chess) === "white" ? "black" : "white";
-    return { winner, result: winner === "white" ? "1-0" : "0-1", reason: t("over.checkmate") };
-  }
-  const draw = (reason) => ({ winner: null, result: "½-½", reason });
-  if (chess.isStalemate()) return draw(t("over.stalemate"));
-  if (chess.isThreefoldRepetition()) return draw(t("over.threefold"));
-  if (chess.isInsufficientMaterial()) return draw(t("over.material"));
-  if (chess.isDrawByFiftyMoves()) return draw(t("over.fifty"));
-  return null;
+  const ending = gameEnding(chess);
+  if (!ending) return null;
+  const result = ending.winner ? (ending.winner === "white" ? "1-0" : "0-1") : "½-½";
+  return { winner: ending.winner, result, reason: t(`over.${ending.termination}`) };
 }
 
 let toastTimer = null;
@@ -539,6 +536,7 @@ function scheduleAnalysis() {
   clearTimeout(analysisTimer);
   analysisCtrl?.abort();
   analysisError = false;
+  evalFailures = 0;
   pumpEvals();
   if (!wantsAnalysis()) return;
   const id = analysedId();
@@ -549,11 +547,11 @@ function scheduleAnalysis() {
 async function runAnalysis(id) {
   const ctrl = (analysisCtrl = new AbortController());
   try {
-    const analysis = await api.analyse(position(id), prefs.multipv, ctrl.signal);
+    const analysis = await engine.analyse(position(id), prefs.multipv, ctrl.signal);
     analysisCache.set(analysisKey(id), analysis);
     evals.set(id, analysis);
   } catch (error) {
-    if (api.isAbort(error)) return;
+    if (engine.isAbort(error)) return;
     console.warn("analysis failed", error);
     analysisError = true;
   }
@@ -570,10 +568,10 @@ async function pumpEvals() {
   const ctrl = (evalCtrl = new AbortController());
   let failed = false;
   try {
-    const analysis = await api.analyse(position(id), 1, ctrl.signal, TIMELINE_MOVETIME_MS);
+    const analysis = await engine.analyse(position(id), 1, ctrl.signal, { timeline: true });
     if (game.id === gameId && !evals.has(id)) evals.set(id, analysis);
   } catch (error) {
-    failed = !api.isAbort(error);
+    failed = !engine.isAbort(error);
   } finally {
     evalBusy = false;
   }
@@ -581,12 +579,10 @@ async function pumpEvals() {
   renderMoves();
   renderTimelineCard();
   renderRage();
-  if (failed) {
-    clearTimeout(evalRetryTimer);
-    evalRetryTimer = setTimeout(pumpEvals, 5000);
-  } else {
-    pumpEvals();
-  }
+  evalFailures = failed ? evalFailures + 1 : 0;
+  clearTimeout(evalRetryTimer);
+  if (!failed) pumpEvals();
+  else if (evalFailures < EVAL_MAX_FAILURES) evalRetryTimer = setTimeout(pumpEvals, EVAL_RETRY_MS * 2 ** (evalFailures - 1));
 }
 
 async function maybeEngineMove() {
@@ -600,14 +596,14 @@ async function maybeEngineMove() {
   render();
   const started = performance.now();
   try {
-    const move = await api.engineMove(position(n.id), game.elo, ctrl.signal);
+    const move = await engine.engineMove(position(n.id), game.elo, ctrl.signal);
     await sleep(Math.max(0, ENGINE_MIN_DELAY_MS - (performance.now() - started)));
     if (ctrl.signal.aborted || game.currentId !== n.id) return;
     engineCtrl = null;
     thinking = false;
     playMove(move.uci, "engine");
   } catch (error) {
-    if (api.isAbort(error)) return;
+    if (engine.isAbort(error)) return;
     console.warn("engine move failed", error);
     toast(t("engine.unavailable"), t("action.retry"), () => maybeEngineMove(), 8000);
   } finally {
@@ -1238,6 +1234,13 @@ function bind() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
   navigator.serviceWorker.register("sw.js").catch((error) => console.warn("service worker", error));
+  // Hands the worker everything this load fetched, so the app launches offline from now on
+  navigator.serviceWorker.ready.then((registration) => {
+    // The engine worker's own fetches are not listed: WebKit would leave them out (spec 005 §11)
+    const loaded = performance.getEntriesByType("resource").map((entry) => entry.name);
+    const urls = [location.href, ...loaded, ...engine.ENGINE_FILES.map((path) => new URL(path, location.href).href)];
+    registration.active?.postMessage({ type: "cache", urls });
+  });
 }
 
 applyThemes(prefs);

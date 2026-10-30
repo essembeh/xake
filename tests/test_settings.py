@@ -28,3 +28,8 @@ def test_unknown_language_is_rejected(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setenv("XAKE_DEFAULT_LANGUAGE", "eu")
     with raises(ValidationError):
         AppSettings.model_validate({})
+
+
+def test_play_movetime_from_env(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setenv("XAKE_PLAY_MOVETIME_MS", "500")
+    assert AppSettings.model_validate({}).play_movetime_ms == 500

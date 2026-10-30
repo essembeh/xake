@@ -20,18 +20,15 @@ jobs:
       - run: uv run --no-sync ruff check src tests
       - run: uv run --no-sync mypy src tests
 
-  # Same command as `just test`, against a real Stockfish: without it the API tests would be skipped
+  # Same command as `just test`
   python-test:
     name: Unit tests
     runs-on: ubuntu-latest
-    env:
-      XAKE_STOCKFISH_PATH: /usr/games/stockfish
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           enable-cache: true
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends stockfish
       - run: uv sync --locked
       - run: uv run --no-sync -- pytest --cov=xake --cov-report=term-missing
 

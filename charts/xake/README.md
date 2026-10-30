@@ -27,31 +27,21 @@ application.
 | `xake.logLevel` | `INFO` | `LOGURU_LEVEL` |
 | `xake.defaultElo` | `1500` | `XAKE_DEFAULT_ELO`: Stockfish level of a first visit (400 to 3190), then each browser remembers the last level chosen |
 | `xake.defaultLanguage` | `en` | `XAKE_DEFAULT_LANGUAGE`: `en` or `fr`, for browsers in another language; each user can still switch in the settings |
-| `xake.playPoolSize` | `1` | `XAKE_PLAY_POOL_SIZE` |
-| `xake.analysePoolSize` | `2` | `XAKE_ANALYSE_POOL_SIZE` |
-| `xake.engineThreads` | `1` | `XAKE_ENGINE_THREADS` |
-| `xake.engineHashMb` | `64` | `XAKE_ENGINE_HASH_MB` |
-| `xake.playMovetimeMs` | `300` | `XAKE_PLAY_MOVETIME_MS` |
-| `xake.analyseMovetimeMs` | `500` | `XAKE_ANALYSE_MOVETIME_MS` |
-| `xake.maxMovetimeMs` | `3000` | `XAKE_MAX_MOVETIME_MS` |
-| `xake.acquireTimeoutS` | `10` | `XAKE_ACQUIRE_TIMEOUT_S` |
+| `xake.playMovetimeMs` | `300` | `XAKE_PLAY_MOVETIME_MS`: thinking time of the opponent per move, in the player's browser |
 | `xake.extraEnv` | `[]` | any other variable, as a list of `name` / `value` |
 
-The image ships Stockfish from Debian (`/usr/games/stockfish`); `XAKE_STOCKFISH_PATH` only needs
-to be set to use another binary mounted with `volumes`.
+Stockfish runs in each player's browser (WebAssembly): the pod only serves the static app and
+`/config.js`, the image has no engine.
 
 ### Sizing
 
-Each Stockfish process holds about 330 MiB (NNUE network and hash table), so memory grows with
-`playPoolSize + analysePoolSize`. The defaults (3 engines) need about 1.1 GiB, hence the `1Gi`
-request and `1536Mi` limit. The pool sizes also bound the concurrent searches, and therefore the
-CPU a pod can burn; there is no CPU limit on purpose, a throttled search just plays weaker.
+A static server: the defaults request `20m` CPU and `96Mi`, with a `192Mi` memory limit. The load
+does not grow with the number of games, the players' devices do the computing.
 
 ### Exposure
 
-The API has no authentication: whoever reaches it spends the cluster CPU. `maxMovetimeMs` and the
-pool sizes cap the damage, an auth in front of the `Ingress` (forward auth, oauth2-proxy) avoids
-it. Serve it over TLS: the service worker (offline launch, home screen install) needs HTTPS.
+No engine on the server, so no CPU to protect: the app can be public. Serve it over TLS: the
+service worker (offline launch, home screen install) needs HTTPS.
 
 ## Kubernetes values
 

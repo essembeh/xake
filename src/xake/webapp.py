@@ -1,5 +1,3 @@
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
@@ -7,7 +5,6 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from . import __file__ as app_root
-from .engine import Engines
 from .routers import api, web
 from .schema.settings import AppSettings
 from .settings import current_settings
@@ -16,17 +13,7 @@ static_folder = Path(app_root).parent / "static"
 
 
 def create_app(settings: AppSettings = current_settings) -> FastAPI:
-    @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        engines = Engines.from_settings(settings)
-        await engines.start()
-        app.state.engines = engines
-        try:
-            yield
-        finally:
-            await engines.close()
-
-    out = FastAPI(title="xake", lifespan=lifespan)
+    out = FastAPI(title="xake")
     out.state.settings = settings
     out.include_router(api.router)
     out.include_router(web.router)

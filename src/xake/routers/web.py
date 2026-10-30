@@ -23,6 +23,7 @@ async def config_js(request: Request) -> Response:
     config = {
         "defaultLanguage": settings.default_language,
         "defaultElo": settings.default_elo,
+        "playMovetimeMs": settings.play_movetime_ms,
         "version": metadata.version("xake"),
     }
     return Response(

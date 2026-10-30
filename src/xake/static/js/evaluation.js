@@ -61,3 +61,14 @@ export function materialDiff(fen) {
   }
   return { score, captured };
 }
+
+// How a chess.js position ends, for the board and the engine alike: claimable draws end the game (spec 005 §11).
+export function gameEnding(chess) {
+  const draw = (termination) => ({ winner: null, termination });
+  if (chess.isCheckmate()) return { winner: chess.turn() === "w" ? "black" : "white", termination: "checkmate" };
+  if (chess.isStalemate()) return draw("stalemate");
+  if (chess.isThreefoldRepetition()) return draw("threefold");
+  if (chess.isInsufficientMaterial()) return draw("material");
+  if (chess.isDrawByFiftyMoves()) return draw("fifty");
+  return null;
+}

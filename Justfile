@@ -9,7 +9,7 @@ check:
     uv run ruff check src tests
     uv run mypy src tests
 
-# Unit tests + coverage in the console — like the CI job python-test (needs stockfish, see shell.nix)
+# Unit tests + coverage in the console — like the CI job python-test
 test pytest_args="":
     uv run -- pytest --cov=xake --cov-report=term-missing {{pytest_args}}
 
@@ -63,6 +63,14 @@ publish:
     git log -1 --pretty="%B" | grep '^🔖 New release: '
     git push
     git push --tags
+
+# Smoke test of the browser engine (Chromium, WebKit) against a running `just webapp`: no CI job, the engine needs a browser
+e2e url="http://127.0.0.1:8000/":
+    LD_LIBRARY_PATH="$(nix-build '<nixpkgs>' -A stdenv.cc.cc.lib --no-out-link)/lib" \
+    PLAYWRIGHT_BROWSERS_PATH="$(nix-build '<nixpkgs>' -A playwright-driver.browsers --no-out-link)" \
+    PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true \
+    uv run --script --with "playwright==$(nix-instantiate --eval -E '(import <nixpkgs> {}).python3Packages.playwright.version' | tr -d '"')" \
+    scripts/e2e.py --url {{url}}
 
 # Regenerate the README screenshots against a running `just webapp` (NixOS: browsers from nixpkgs)
 screenshots url="http://127.0.0.1:8000/":

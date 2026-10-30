@@ -8,7 +8,6 @@ authors = [{ name = "Sébastien MB", email = "seb@essembeh.org" }]
 # NixOS stable Python; bump together with .python-version and the Dockerfile.
 requires-python = ">=3.13"
 dependencies = [
-    "chess>=1.11.2",
     "fastapi>=0.162.0",
     "loguru>=0.7.3",
     "pydantic-settings>=2.16.1",
@@ -29,7 +28,6 @@ dev = [
     "mypy>=2.4.0",
     "pip-audit>=2.10.1",
     "pytest>=9.2.0",
-    "pytest-asyncio>=1.4.1",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.3",
 ]
@@ -63,8 +61,6 @@ warn_redundant_casts = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "module"
 
 [tool.coverage.run]
 source = ["xake"]

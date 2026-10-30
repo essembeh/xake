@@ -2,36 +2,32 @@
 
 Xake ("chess" in Basque): a chess training web app. Play Stockfish at a chosen Elo, best moves on
 demand, evaluation graph with annotated mistakes, variations, bookmarks, shareable links, PWA.
-Design decisions live in `docs/specs/*.md` (001 MVP, 002 UX, 003 i18n, 004 game analysis): read the relevant spec
+Design decisions live in `docs/specs/*.md` (001 MVP, 002 UX, 003 i18n, 004 game analysis, 005 browser engine): read the relevant spec
 before changing a behaviour, update it when a decision changes.
 
 ## Architecture
 
-- **Backend** (`src/xake/`): FastAPI, **stateless**, no database. Every request carries the whole
-  position (`start_fen` + UCI moves); games live in the browser.
-  - `engine.py`: `EnginePool` of long-lived Stockfish processes (python-chess UCI, async), two
-    pools: `play` (Elo-limited) and `analyse` (full strength). A dead engine is respawned.
-    Analysis keeps only exact UCI infos from the deepest complete depth (bound infos carry a
-    truncated PV; mixing depths duplicates lines).
-  - `elo.py`: Elo → UCI options. ≥ 1320: `UCI_LimitStrength`/`UCI_Elo`; below: `Skill Level 0` +
-    node budget (uncalibrated).
-  - `routers/api.py`: `/api/move`, `/api/analyse`, `/api/health` (pings an engine),
-    `/api/version` (engine-free, used by the k8s probes: never point a probe at `/api/health`).
-  - `routers/web.py`: `/config.js` (service settings for the front, e.g. default language).
-  - `schema/api.py`: Pydantic models; `Position` replays and validates the moves.
+- **Backend** (`src/xake/`): FastAPI, **stateless**, no database, **no engine**: Stockfish runs in the
+  browser only (spec 005 §10). The backend serves the static app and the service settings.
+  - `routers/api.py`: `/api/version`, the readiness probe of the chart (no liveness probe).
+  - `routers/web.py`: `/config.js` (service settings for the front: default language, Elo, opponent
+    movetime), root icons for iOS.
   - `schema/settings.py` + `settings.py`: `XAKE_*` environment variables.
-  - `webapp.py`: `create_app(settings)`, lifespan starts the pools, static files mounted last.
+  - `webapp.py`: `create_app(settings)`, static files mounted last.
 - **Front-end** (`src/xake/static/`): plain ES modules, **no build, no npm**.
   - `js/main.js`: app controller (rendering, engine/analysis requests, actions, shortcuts).
   - `js/tree.js`: game = tree of moves (first child = main line), bookmarks, undo snapshots.
   - `js/storage.js`: `localStorage`, keys `xake:v1:*`, one key per game.
   - `js/i18n.js`: `en`/`fr` dictionaries, `t()`, `data-i18n*` attributes in `index.html`.
+  - `js/engine.js`: Stockfish WebAssembly in Web Workers (pools `play`, Elo-limited, and `analyse`),
+    Elo → UCI options (spec 001 §4), analysis keeps only exact infos of the deepest complete depth,
+    fixed node budgets (spec 005 §9).
   - `js/share.js`: game ⇄ URL fragment; `js/pgn.js`: PGN export/import (import = main line only).
-  - `js/evaluation.js`, `js/timeline.js`, `js/themes.js`, `js/sounds.js`, `js/api.js`.
-  - `vendor/`: chessground, chess.js and Lichess piece sets (free licences only), pinned and fetched by
+  - `js/evaluation.js`, `js/timeline.js`, `js/themes.js`, `js/sounds.js`.
+  - `vendor/`: chessground, chess.js, stockfish.js (lite WebAssembly) and Lichess piece sets (free licences only), pinned and fetched by
     `scripts/vendor.sh` (`just vendor`) with curl. Never edit by hand.
   - `sw.js`: network-first service worker (app shell offline, API never cached).
-- **Deployment**: `Dockerfile` (uv multi-stage, Stockfish from Debian at `/usr/games/stockfish`),
+- **Deployment**: `Dockerfile` (uv multi-stage, no engine in the image),
   Helm chart `charts/xake/`, CI `.github/workflows/release.yml` (image `ghcr.io/essembeh/xake`,
   chart published by chart-releaser on tags).
 
@@ -42,11 +38,12 @@ The `Justfile` is the project interface:
 | Recipe | What |
 | --- | --- |
 | `just check` | ruff format --check, ruff check, mypy strict on `src` and `tests` |
-| `just test` | pytest + coverage, against a **real Stockfish** |
+| `just test` | pytest + coverage |
 | `just audit` | pip-audit |
 | `just chart` | helm lint + template |
 | `just webapp` | dev server with reload on `0.0.0.0:8000` |
 | `just docker` | build and run the image with podman |
+| `just e2e [url]` | smoke test of the browser engine in Chromium and WebKit (Playwright, dev server running) |
 | `just screenshots [url]` | regenerate `docs/screenshots/` (Playwright, browsers from nixpkgs) |
 | `just vendor` | refresh pinned front-end assets |
 | `just release [bump]` / `just publish` | version bump + chart version + tag, then push |
@@ -59,12 +56,9 @@ The `Justfile` is the project interface:
   machine's LAN IP, never `localhost`:
   `firefox "http://$(ip -4 route get 1.1.1.1 | grep -oP 'src \K\S+'):8000/"`. Plain HTTP on a
   non-localhost address is not a secure context: no service worker, no clipboard API.
-- Stockfish comes from `shell.nix` (direnv: `use nix`). Outside the nix shell, set
-  `XAKE_STOCKFISH_PATH`; without a binary the API tests are **skipped**, not failed.
-- Tests use the real engine, no mocks: keep assertions robust to engine variance (scores,
-  chosen moves, 150 ms timeline judgements differ between runs).
-- The front-end has no test suite: check UI changes in a browser (Playwright from nixpkgs, see
-  the `screenshots` recipe for the NixOS incantation).
+- The engine lives in the front-end, which has no unit tests: run `just e2e` after an engine
+  change, and check UI changes in a browser (Playwright from nixpkgs, see the `screenshots` recipe for the NixOS incantation). Never
+  measure engine speed with Playwright's Firefox (12× slower than a real Firefox, spec 005 §9).
 
 ## Keeping docs in step with each change
 
