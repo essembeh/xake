@@ -267,8 +267,8 @@ Option étudiée : `XAKE_ENGINE=browser|server` (navigateur par défaut, un seul
   dimensionnement à remettre dans la chart.
 
 **Décision** : navigateur seulement, pour la simplicité et la maintenabilité. Pour y revenir, le
-code du mode serveur est conservé par le tag `archive/server-engine` (dernier état avec les modes
-`server`, `browser` et `both`) : le restaurer sans le mode `both`.
+moteur serveur est intact dans la version `0.2.5` (`engine.py`, `elo.py`, `schema/api.py`, routes,
+tests) ; l'aiguillage entre les modes est à réécrire, décrit aux §2 et §9.
 
 ## 11. Revue après le passage au navigateur seul (2026-10-30)
 
