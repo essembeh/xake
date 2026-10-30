@@ -75,12 +75,12 @@ jobs:
         id: meta
         with:
           images: ghcr.io/essembeh/xake
+          # No per-commit tag: a rebuilt branch untags its previous image, which ghcr-cleanup deletes
           tags: |
             type=schedule
             type=ref,event=branch
             type=ref,event=tag
             type=ref,event=pr
-            type=sha
             type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -88,6 +88,22 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           push: true
+
+  # GHCR keeps every version forever: drop the images no tag points to any more (single-manifest images,
+  # so no untagged child of a tagged index). Needs the Admin role for this repository in the package settings.
+  ghcr-cleanup:
+    name: Delete untagged images
+    needs: docker-build
+    permissions:
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/delete-package-versions@e5bc658cc4c965c472efe991f8beea3981499c55 # v5.0.0
+        with:
+          package-name: xake
+          package-type: container
+          min-versions-to-keep: 0
+          delete-only-untagged-versions: "true"
 
   # Optional: without the RENDER_DEPLOY_HOOK_URL secret there is no demo instance and nothing happens
   demo-deploy:
