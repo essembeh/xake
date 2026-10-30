@@ -39,7 +39,7 @@ function renderLine(game, from, out, forceNumber) {
 export function exportPgn(game) {
   const { result } = summary(game);
   const pgnResult = result === "½-½" ? "1/2-1/2" : result || "*";
-  const engine = `Stockfish (${game.elo})`;
+  const engine = `${game.opponent === "maia" ? "Maia" : "Stockfish"} (${game.elo})`;
   const tags = {
     Event: game.name || "xake",
     Date: new Date(game.createdAt).toISOString().slice(0, 10).replace(/-/g, "."),

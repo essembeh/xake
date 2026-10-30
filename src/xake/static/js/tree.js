@@ -5,7 +5,7 @@ export const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0
 
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`.replace(".", ""));
 
-export function newGame({ playerColor, startFen = null, elo }) {
+export function newGame({ playerColor, startFen = null, elo, opponent = "stockfish" }) {
   const now = Date.now();
   const root = { id: "root", parent: null, uci: null, san: null, fen: startFen || START_FEN, by: null, children: [] };
   return {
@@ -15,6 +15,8 @@ export function newGame({ playerColor, startFen = null, elo }) {
     playerColor,
     startFen,
     elo,
+    // "stockfish" or "maia" (spec 006); games saved before have none: Stockfish
+    opponent,
     twoSides: false,
     nodes: { root },
     rootId: "root",

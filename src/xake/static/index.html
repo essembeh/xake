@@ -53,6 +53,21 @@
       <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-4 3 3 6-6" /></symbol>
       <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" /></symbol>
       <symbol id="i-users" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3" /><circle cx="16" cy="8" r="3" /><path d="M2 20a6 6 0 0 1 12 0M10 20a6 6 0 0 1 12 0" /></symbol>
+      <!-- Flags carry their own colours: drawn with stroke="none", they ignore the `button svg` stroke -->
+      <symbol id="i-flag-en" viewBox="0 0 60 30">
+        <clipPath id="flag-en-frame"><path d="M0 0v30h60V0z" /></clipPath>
+        <clipPath id="flag-en-half"><path d="M30 15h30v15zv15H0zH0V0zV0h30z" /></clipPath>
+        <g clip-path="url(#flag-en-frame)">
+          <path d="M0 0v30h60V0z" fill="#012169" stroke="none" />
+          <path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6" />
+          <path d="M0 0l60 30m0-30L0 30" clip-path="url(#flag-en-half)" stroke="#c8102e" stroke-width="4" />
+          <path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10" />
+          <path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6" />
+        </g>
+      </symbol>
+      <symbol id="i-flag-fr" viewBox="0 0 3 2">
+        <g stroke="none"><path d="M0 0h1v2H0z" fill="#002395" /><path d="M1 0h1v2H1z" fill="#fff" /><path d="M2 0h1v2H2z" fill="#ed2939" /></g>
+      </symbol>
       <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-4-4M20 16H6l4 4" /></symbol>
     </svg>
 
@@ -173,43 +188,43 @@
         <h2 data-i18n="settings.title">Settings</h2>
         <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus><svg><use href="#i-close" /></svg></button>
       </header>
-      <label class="field">
-        <span><span data-i18n="settings.level">Stockfish level:</span> <b id="elo-value">1500</b></span>
-        <input id="elo-input" type="range" min="400" max="3190" step="10" />
-        <small data-i18n="settings.levelHint">Indicative. Below 1320 the level is simulated (handicapped engine).</small>
-      </label>
-      <div class="field">
-        <span data-i18n="settings.multipv">Number of best moves</span>
-        <div id="multipv-input" class="segmented"></div>
-      </div>
-      <div class="field">
-        <span data-i18n="settings.language">Language</span>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.language">Language</h3>
         <div id="language-input" class="segmented"></div>
-      </div>
-      <div class="field">
-        <span data-i18n="settings.theme">Theme</span>
-        <div id="ui-theme-input" class="segmented"></div>
-      </div>
-      <div class="field">
-        <span data-i18n="settings.board">Board</span>
-        <div id="board-theme-input" class="swatches"></div>
-      </div>
-      <div class="field">
-        <span data-i18n="settings.pieces">Pieces</span>
-        <div id="piece-set-input" class="piece-sets"></div>
-      </div>
-      <label class="field inline">
-        <input id="coordinates-input" type="checkbox" />
-        <span data-i18n="settings.coordinates">Coordinates</span>
-      </label>
-      <label class="field inline">
-        <input id="sound-input" type="checkbox" />
-        <span data-i18n="settings.sound">Sounds</span>
-      </label>
-      <label class="field inline">
-        <input id="rage-input" type="checkbox" />
-        <span data-i18n="settings.rage">"Rage quit" button, when you are losing</span>
-      </label>
+      </section>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.sectionAppearance">Appearance</h3>
+        <div class="field">
+          <span data-i18n="settings.theme">Theme</span>
+          <div id="ui-theme-input" class="segmented"></div>
+        </div>
+        <div class="field">
+          <span data-i18n="settings.board">Board</span>
+          <div id="board-theme-input" class="swatches"></div>
+        </div>
+        <div class="field">
+          <span data-i18n="settings.pieces">Pieces</span>
+          <div id="piece-set-input" class="piece-sets"></div>
+        </div>
+      </section>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.sectionAnalysis">Analysis</h3>
+        <div class="field">
+          <span data-i18n="settings.multipv">Number of best moves</span>
+          <div id="multipv-input" class="segmented"></div>
+        </div>
+      </section>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.sectionGame">Game</h3>
+        <label class="field inline">
+          <input id="sound-input" type="checkbox" />
+          <span data-i18n="settings.sound">Sounds</span>
+        </label>
+        <label class="field inline">
+          <input id="rage-input" type="checkbox" />
+          <span data-i18n="settings.rage">"Rage quit" button, when you are losing</span>
+        </label>
+      </section>
     </dialog>
 
     <dialog id="sheet-new" class="sheet">
@@ -235,15 +250,20 @@
             </button>
           </div>
         </div>
+        <div class="field">
+          <span data-i18n="new.opponent">Opponent</span>
+          <div id="opponent-input" class="segmented"></div>
+        </div>
         <label class="field">
-          <span><span data-i18n="settings.level">Stockfish level:</span> <b id="new-elo-value">1500</b></span>
+          <span><span id="new-elo-label">Stockfish level:</span> <b id="new-elo-value">1500</b></span>
           <input id="new-elo-input" type="range" min="400" max="3190" step="10" />
+          <small id="new-elo-hint">Indicative. Below 1320 the level is simulated (handicapped engine).</small>
         </label>
         <details class="field">
           <summary data-i18n="new.custom">Custom starting position</summary>
           <input id="fen-input" type="text" placeholder="FEN" autocomplete="off" spellcheck="false" />
         </details>
-        <button type="submit" class="primary wide" data-i18n="new.start">Start</button>
+        <button id="new-start" type="submit" class="primary wide" data-i18n="new.start">Start</button>
       </form>
     </dialog>
 

@@ -1,7 +1,7 @@
 # xake Helm chart
 
-Deploys [Xake](https://github.com/essembeh/xake), a chess training web app playing Stockfish at a
-chosen Elo with live analysis: a single stateless `Deployment` with a `Service`, an optional
+Deploys [Xake](https://github.com/essembeh/xake), a chess training web app playing Stockfish or
+Maia (human-like) at a chosen Elo with live analysis: a single stateless `Deployment` with a `Service`, an optional
 `Ingress` and an optional `HorizontalPodAutoscaler`. Games live in the browsers, the pods share
 nothing.
 
@@ -31,7 +31,8 @@ application.
 | `xake.extraEnv` | `[]` | any other variable, as a list of `name` / `value` |
 
 Stockfish runs in each player's browser (WebAssembly): the pod only serves the static app and
-`/config.js`, the image has no engine.
+`/config.js`. The image runs no engine process: it ships Stockfish (WebAssembly) and the Maia
+networks as static files, downloaded by each browser.
 
 ### Sizing
 

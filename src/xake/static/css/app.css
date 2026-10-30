@@ -438,6 +438,7 @@ kbd {
 }
 
 .strip .elo {
+  pointer-events: none;
   min-height: 26px;
   padding: 0 8px;
   border-radius: 999px;
@@ -1252,6 +1253,41 @@ cg-board square.check {
 .sheet-head h2 {
   margin: 0;
   font-size: 19px;
+}
+
+/* Settings grouped by theme, a rule and a small title between groups (spec 002 §12) */
+.sheet-section + .sheet-section {
+  border-top: 1px solid var(--border);
+}
+
+.sheet-section {
+  padding: 16px 0 4px;
+}
+
+.sheet-section h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+
+.sheet-section > .segmented {
+  margin: 10px 0 12px;
+}
+
+.sheet-section .field {
+  margin: 12px 0;
+}
+
+.segmented button .flag {
+  width: 22px;
+  height: 15px;
+  margin-right: 8px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--border);
+  vertical-align: middle;
 }
 
 .field {

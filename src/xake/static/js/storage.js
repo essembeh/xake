@@ -8,6 +8,8 @@ export const DEFAULT_PREFS = {
   // XAKE_DEFAULT_ELO, injected by /config.js; the level chosen afterwards is stored with the prefs.
   elo: window.XAKE_CONFIG?.defaultElo ?? 1500,
   multipv: 3,
+  // Opponent of the next new game, "stockfish" or "maia" (spec 006)
+  opponent: "stockfish",
   showAnalysis: true,
   showBestMoves: false,
   // null: the service default (XAKE_DEFAULT_LANGUAGE) until the user picks one.
@@ -15,7 +17,6 @@ export const DEFAULT_PREFS = {
   uiTheme: "auto",
   boardTheme: "brown",
   pieceSet: "cburnett",
-  coordinates: true,
   sound: true,
   rageQuit: true,
   playerColor: "white",

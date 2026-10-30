@@ -186,9 +186,51 @@ const setOptions = (options) => Object.entries(options).map(([name, value]) => `
 
 const sanOf = (chess, uci) => new Chess(chess.fen()).move(uciToMove(uci)).san;
 
-export async function engineMove(position, elo, signal) {
+// The player picks the opponent of a game (spec 006): Stockfish held back by Elo, or Maia, one
+// network per 100 points of Lichess rating, playing like a human of that level.
+export const OPPONENTS = {
+  stockfish: { name: "Stockfish", minElo: 400, maxElo: 3190, step: 10 },
+  maia: { name: "Maia", minElo: 1100, maxElo: 1900, step: 100 },
+};
+
+export function snapElo(elo, opponent) {
+  const { minElo, maxElo, step } = OPPONENTS[opponent] ?? OPPONENTS.stockfish;
+  return Math.min(maxElo, Math.max(minElo, Math.floor(elo / step) * step));
+}
+
+// Loaded on demand: ONNX Runtime and the networks are only fetched for a Maia game.
+let maia = null;
+const loadMaia = () =>
+  (maia ??= import("./maia.js").catch((error) => {
+    maia = null;
+    throw error;
+  }));
+
+// Downloads the network of this level (then cached by the service worker) before the game starts.
+export async function preloadMaia(elo) {
+  try {
+    await (await loadMaia()).preload(elo);
+  } catch (error) {
+    throw new EngineError(`Maia unavailable: ${error}`);
+  }
+}
+
+export async function engineMove(position, elo, signal, opponent = "stockfish") {
   const board = boardOf(position);
   if (outcomeOf(board)) throw new EngineError("game is over");
+  if (opponent !== "maia") return stockfishMove(board, position, elo, signal);
+  let out;
+  try {
+    out = await (await loadMaia()).move(position, elo, signal);
+  } catch (error) {
+    if (isAbort(error)) throw error;
+    throw new EngineError(`Maia unavailable: ${error}`);
+  }
+  if (!out) throw new EngineError("game is over");
+  return out;
+}
+
+async function stockfishMove(board, position, elo, signal) {
   const { options, nodes } = strengthFor(elo);
   const go = `go movetime ${PLAY_MOVETIME_MS}${nodes ? ` nodes ${nodes}` : ""}`;
   const uci = await pools.play.run(signal, (engine) =>

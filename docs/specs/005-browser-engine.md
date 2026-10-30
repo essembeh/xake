@@ -5,7 +5,7 @@
 > appareil près. D'abord un choix de l'instance (`XAKE_ENGINE`, puis `both`, §9), finalement **le
 > seul mode** : le moteur serveur est retiré (§10).
 >
-> Statut : **implémenté** (branche `feature-browser-engine`). Rédigé le 2026-10-29, révisé le 2026-10-30.
+> Statut : **implémenté** (version 0.3.0). Rédigé le 2026-10-29, révisé le 2026-10-30.
 
 ## 1. Où on en est aujourd'hui
 

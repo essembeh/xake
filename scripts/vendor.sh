@@ -13,7 +13,8 @@ VENDOR=$ROOT/src/xake/static/vendor
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-rm -rf "$VENDOR"
+# Only what this script manages: the Maia assets (scripts/fetch-maia.sh, not committed) stay
+rm -rf "$VENDOR/chessground" "$VENDOR/chess.js" "$VENDOR/pieces" "$VENDOR/stockfish"
 mkdir -p "$VENDOR/chessground" "$VENDOR/chess.js" "$VENDOR/pieces" "$VENDOR/stockfish"
 
 curl -fsSL "https://registry.npmjs.org/chessground/-/chessground-$CHESSGROUND_VERSION.tgz" | tar xz -C "$TMP"

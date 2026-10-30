@@ -2,7 +2,7 @@
 
 Xake ("chess" in Basque): a chess training web app. Play Stockfish at a chosen Elo, best moves on
 demand, evaluation graph with annotated mistakes, variations, bookmarks, shareable links, PWA.
-Design decisions live in `docs/specs/*.md` (001 MVP, 002 UX, 003 i18n, 004 game analysis, 005 browser engine): read the relevant spec
+Design decisions live in `docs/specs/*.md` (001 MVP, 002 UX, 003 i18n, 004 game analysis, 005 browser engine, 006 Maia opponent): read the relevant spec
 before changing a behaviour, update it when a decision changes.
 
 ## Architecture
@@ -21,7 +21,9 @@ before changing a behaviour, update it when a decision changes.
   - `js/i18n.js`: `en`/`fr` dictionaries, `t()`, `data-i18n*` attributes in `index.html`.
   - `js/engine.js`: Stockfish WebAssembly in Web Workers (pools `play`, Elo-limited, and `analyse`),
     Elo → UCI options (spec 001 §4), analysis keeps only exact infos of the deepest complete depth,
-    fixed node budgets (spec 005 §9).
+    fixed node budgets (spec 005 §9); `engineMove` dispatches to Stockfish or Maia, the opponent stored
+    with each game (spec 006).
+  - `js/maia.js`: Maia networks on ONNX Runtime Web, lc0 board encoding, move drawn among those ≥ 10%.
   - `js/share.js`: game ⇄ URL fragment; `js/pgn.js`: PGN export/import (import = main line only).
   - `js/evaluation.js`, `js/timeline.js`, `js/themes.js`, `js/sounds.js`.
   - `vendor/`: chessground, chess.js, stockfish.js (lite WebAssembly) and Lichess piece sets (free licences only), pinned and fetched by
@@ -41,7 +43,8 @@ The `Justfile` is the project interface:
 | `just test` | pytest + coverage |
 | `just audit` | pip-audit |
 | `just chart` | helm lint + template |
-| `just webapp` | dev server with reload on `0.0.0.0:8000` |
+| `just webapp` | dev server with reload on `0.0.0.0:8000` (fetches the Maia assets first) |
+| `just maia-assets` | Maia networks + ONNX Runtime (~46 MB, never committed, SHA-256 checked; the image build fetches them too) |
 | `just docker` | build and run the image with podman |
 | `just e2e [url]` | smoke test of the browser engine in Chromium and WebKit (Playwright, dev server running) |
 | `just screenshots [url]` | regenerate `docs/screenshots/` (Playwright, browsers from nixpkgs) |

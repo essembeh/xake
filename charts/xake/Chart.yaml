@@ -3,12 +3,13 @@ name: xake
 type: application
 version: 0.2.5
 appVersion: 0.2.5
-description: Learn chess against Stockfish at any Elo, with live analysis, the engine running in the browser
+description: Learn chess against Stockfish or Maia at any Elo, with live analysis, the engines running in the browser
 home: https://github.com/essembeh/xake
 icon: https://raw.githubusercontent.com/essembeh/xake/main/src/xake/static/icons/icon-192.png
 keywords:
   - chess
   - stockfish
+  - maia
 maintainers:
   - email: essembeh@users.noreply.github.com
     name: Sébastien MB

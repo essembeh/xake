@@ -1,4 +1,4 @@
-// Game <-> URL fragment: `#c=w&e=1500&m=e2e4.e7e5.(d7d5.e4d5).g1f3[&f=<fen>]` (spec 002 §6).
+// Game <-> URL fragment: `#c=w&e=1500&m=e2e4.e7e5.(d7d5.e4d5).g1f3[&f=<fen>][&o=m]` (spec 002 §6, o=m: Maia, spec 006).
 import { START_FEN, addMove, mainlineEnd, newGame } from "./tree.js";
 
 function serializeFrom(game, id, out) {
@@ -19,6 +19,7 @@ function serializeFrom(game, id, out) {
 export function gameToUrl(game) {
   const parts = [`c=${game.playerColor[0]}`, `e=${game.elo}`, `m=${serializeFrom(game, game.rootId, []).join(".")}`];
   if (game.startFen && game.startFen !== START_FEN) parts.push(`f=${encodeURIComponent(game.startFen)}`);
+  if (game.opponent === "maia") parts.push("o=m");
   return `${location.origin}${location.pathname}#${parts.join("&")}`;
 }
 
@@ -44,7 +45,8 @@ export function gameFromHash(hash, defaultElo) {
   if (!params.has("m")) return null;
   const playerColor = params.get("c") === "b" ? "black" : "white";
   const elo = Number(params.get("e")) || defaultElo;
-  const game = newGame({ playerColor, startFen: params.get("f") || null, elo });
+  const opponent = params.get("o") === "m" ? "maia" : "stockfish";
+  const game = newGame({ playerColor, startFen: params.get("f") || null, elo, opponent });
   const stack = [];
   let parentId = game.rootId;
   let last = null;

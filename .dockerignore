@@ -36,3 +36,7 @@ docker-compose*.yml
 charts/
 docs/
 scripts/
+!scripts/fetch-maia.sh
+# Maia assets: fetched by the image build itself, never taken from a local checkout
+src/xake/static/vendor/onnxruntime/
+src/xake/static/vendor/maia/

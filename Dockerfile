@@ -3,10 +3,20 @@
 # Pinned versions, updated in the dependency bump commit along with uv.lock.
 ARG UV_VERSION=0.11.21
 ARG PYTHON_VERSION=3.13
+ARG ALPINE_VERSION=3.22
 
 #########################################
 ## Stage: uv (official image, pinned version)
 FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
+
+#########################################
+## Stage: assets — Maia opponent files, too big to be committed, checked by SHA-256 (spec 006)
+FROM alpine:${ALPINE_VERSION} AS assets
+
+RUN apk add --no-cache curl
+COPY scripts/fetch-maia.sh /fetch-maia.sh
+RUN /fetch-maia.sh /vendor
+
 
 #########################################
 ## Stage: base
@@ -37,6 +47,7 @@ RUN uv sync --locked --no-dev --no-install-project
 
 # 2) Then the project, not editable: the venv must be self-contained to be copied.
 COPY --chown=app:app src ./src
+COPY --from=assets --chown=app:app /vendor/ ./src/xake/static/vendor/
 RUN uv sync --locked --no-dev --no-editable
 
 

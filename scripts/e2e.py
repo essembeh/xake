@@ -6,7 +6,8 @@
 """Smoke test of the browser engine against a running Xake (`just webapp`), see `just e2e`.
 
 The engine lives in the front-end, which has no unit tests (spec 005 §11): Chromium and WebKit
-play a move against Stockfish, show the best moves, and cache the engine for the offline launch.
+play a move against Stockfish, show the best moves, cache the engine for the offline launch, then
+start a game against Maia (spec 006), which plays the first move.
 """
 
 import argparse
@@ -50,7 +51,21 @@ def check(page: Page, base: str) -> list[str]:
         "async () => (await (await caches.open('xake-shell')).keys()).map((r) => new URL(r.url).pathname)"
     )
     out += [f"not cached for offline: {name}" for name in ENGINE_FILES if not any(k.endswith(name) for k in keys)]
-    return out
+    return out + check_maia(page)
+
+
+def check_maia(page: Page) -> list[str]:
+    page.click("#btn-new")
+    page.click("#color-input button[data-value=black]")
+    page.click("#opponent-input button:nth-child(2)")
+    page.click("#new-start")
+    try:
+        page.wait_for_selector("#sheet-new", state="hidden", timeout=60_000)
+        page.wait_for_function("document.querySelectorAll('#moves .mv').length >= 1", timeout=20_000)
+    except Exception:
+        return ["no first move from Maia"]
+    name = page.inner_text("#strip-top .name")
+    return [] if name == "Maia" else [f"opponent shown as {name!r}"]
 
 
 def main() -> None:

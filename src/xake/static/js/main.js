@@ -35,7 +35,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let prefs = storage.loadPrefs();
 // A piece set removed from the bundle would leave broken images (promotion, material strip).
 if (!PIECE_SETS[prefs.pieceSet]) prefs.pieceSet = storage.DEFAULT_PREFS.pieceSet;
-let game = storage.loadCurrentGame() || tree.newGame({ playerColor: prefs.playerColor, elo: prefs.elo });
+// Games saved before the opponent choice have none: Stockfish (spec 006)
+const opponentOf = (g) => (g.opponent in engine.OPPONENTS ? g.opponent : "stockfish");
+const opponentName = (g = game) => engine.OPPONENTS[opponentOf(g)].name;
+let game =
+  storage.loadCurrentGame() ||
+  tree.newGame({
+    playerColor: prefs.playerColor,
+    opponent: prefs.opponent,
+    elo: engine.snapElo(prefs.elo, prefs.opponent),
+  });
 let orientation = game.playerColor;
 let thinking = false;
 let engineCtrl = null;
@@ -65,7 +74,7 @@ const brushes = Object.fromEntries(
 );
 
 const cg = Chessground($("board"), {
-  coordinates: prefs.coordinates,
+  coordinates: true,
   blockTouchScroll: true,
   highlight: { lastMove: true, check: true },
   animation: { enabled: true, duration: 180 },
@@ -203,7 +212,7 @@ function renderRage() {
 function rageQuit() {
   if (!rageLevel()) return;
   storage.deleteGame(game.id);
-  startNewGame(prefs.playerColor, game.elo);
+  startNewGame(prefs.playerColor, game.elo, null, opponentOf(game));
   toast(t("rage.done"));
 }
 
@@ -211,12 +220,11 @@ function renderStrips(n, turn) {
   const { score, captured } = materialDiff(n.fen);
   const strip = (color) => {
     const isEngine = !game.twoSides && color !== game.playerColor;
-    const name = game.twoSides ? sideName(color) : isEngine ? "Stockfish" : t("strip.you");
+    const name = game.twoSides ? sideName(color) : isEngine ? opponentName() : t("strip.you");
     const out = [el("i", { className: `side-dot ${color}` }), el("span", { className: "name", textContent: name })];
     if (isEngine) {
-      const elo = el("button", { className: "elo", textContent: game.elo, title: t("strip.changeLevel") });
-      elo.onclick = () => openSettings();
-      out.push(elo);
+      // Display only, the level is chosen at the new game (spec 006 §4); a button keeps the digits centred
+      out.push(el("button", { type: "button", className: "elo", textContent: game.elo, tabIndex: -1 }));
       if (thinking) out.push(el("span", { className: "thinking", textContent: t("strip.thinking") }));
     }
     const material = el("span", { className: "material" });
@@ -257,11 +265,11 @@ function renderStatus(chess, turn) {
   let text;
   if (reviewing) text = t("status.review");
   else if (over) text = `${over.reason}${over.winner ? "" : t("status.draw")} (${over.result})`;
-  else if (thinking) text = t("status.thinking");
+  else if (thinking) text = t("status.thinking", { engine: opponentName() });
   else if (game.twoSides) text = t("status.sideToMove", { side: sideName(turn) });
   else if (turn === game.playerColor) text = chess.inCheck() ? t("status.checkYourTurn") : t("status.yourTurn");
-  else if (tree.current(game).children.length) text = t("status.replaceEngine");
-  else text = t("status.engineTurn");
+  else if (tree.current(game).children.length) text = t("status.replaceEngine", { engine: opponentName() });
+  else text = t("status.engineTurn", { engine: opponentName() });
   $("status").textContent = text;
 }
 
@@ -596,7 +604,7 @@ async function maybeEngineMove() {
   render();
   const started = performance.now();
   try {
-    const move = await engine.engineMove(position(n.id), game.elo, ctrl.signal);
+    const move = await engine.engineMove(position(n.id), game.elo, ctrl.signal, opponentOf(game));
     await sleep(Math.max(0, ENGINE_MIN_DELAY_MS - (performance.now() - started)));
     if (ctrl.signal.aborted || game.currentId !== n.id) return;
     engineCtrl = null;
@@ -780,6 +788,7 @@ function openGame(next) {
   game = next;
   orientation = game.playerColor;
   prefs.elo = game.elo;
+  prefs.opponent = opponentOf(game);
   storage.savePrefs(prefs);
   persist();
   syncSettings();
@@ -788,11 +797,22 @@ function openGame(next) {
   maybeEngineMove();
 }
 
-function startNewGame(colorChoice, elo, fen) {
+function startNewGame(colorChoice, elo, fen, opponent) {
   const playerColor = colorChoice === "random" ? (Math.random() < 0.5 ? "white" : "black") : colorChoice;
   prefs.playerColor = colorChoice;
   prefs.elo = elo;
-  openGame(tree.newGame({ playerColor, startFen: fen || null, elo }));
+  openGame(tree.newGame({ playerColor, startFen: fen || null, elo, opponent }));
+}
+
+// The level slider follows the opponent: Stockfish by 10, Maia by 100, one step per network (spec 006).
+function setLevelInput(opponent, elo) {
+  const { minElo, maxElo, step } = engine.OPPONENTS[opponent];
+  const input = $("new-elo-input");
+  Object.assign(input, { min: minElo, max: maxElo, step });
+  input.value = engine.snapElo(elo, opponent);
+  $("new-elo-value").textContent = input.value;
+  $("new-elo-label").textContent = t("settings.level", { engine: engine.OPPONENTS[opponent].name });
+  $("new-elo-hint").textContent = t(opponent === "maia" ? "settings.maiaHint" : "settings.levelHint");
 }
 
 async function sharePgn(target) {
@@ -942,7 +962,7 @@ function toggleTwoSides() {
   persist();
   render();
   maybeEngineMove();
-  toast(t(game.twoSides ? "twoSides.on" : "twoSides.off"));
+  toast(t(game.twoSides ? "twoSides.on" : "twoSides.off", { engine: opponentName() }));
 }
 
 function flip() {
@@ -952,10 +972,12 @@ function flip() {
 
 // ---- Sheets ----
 
+// Options are [value, label] or [value, label, icon symbol id].
 function segmented(container, options, selected, onSelect) {
   container.replaceChildren();
-  for (const [value, label] of options) {
+  for (const [value, label, icon] of options) {
     const button = el("button", { type: "button", textContent: label });
+    if (icon) button.insertAdjacentHTML("afterbegin", `<svg class="flag" aria-hidden="true"><use href="#${icon}" /></svg>`);
     button.setAttribute("aria-pressed", String(String(value) === String(selected)));
     button.onclick = () => onSelect(value);
     container.append(button);
@@ -968,10 +990,6 @@ function updatePrefs(patch) {
   storage.savePrefs(prefs);
   applyThemes(prefs);
   if (patch.language !== undefined) setLanguage(prefs.language);
-  if (patch.coordinates !== undefined) {
-    cg.set({ coordinates: prefs.coordinates });
-    cg.redrawAll();
-  }
   syncSettings();
   render();
   if (
@@ -984,13 +1002,15 @@ function updatePrefs(patch) {
 }
 
 function syncSettings() {
-  $("elo-input").value = game.elo;
-  $("elo-value").textContent = game.elo;
-  $("coordinates-input").checked = prefs.coordinates;
   $("sound-input").checked = prefs.sound;
   $("rage-input").checked = prefs.rageQuit;
   segmented($("multipv-input"), [1, 2, 3, 4, 5].map((v) => [v, String(v)]), prefs.multipv, (v) => updatePrefs({ multipv: v }));
-  segmented($("language-input"), Object.entries(LANGUAGES), language(), (v) => updatePrefs({ language: v }));
+  segmented(
+    $("language-input"),
+    Object.entries(LANGUAGES).map(([key, name]) => [key, name, `i-flag-${key}`]),
+    language(),
+    (v) => updatePrefs({ language: v }),
+  );
   segmented(
     $("ui-theme-input"),
     UI_THEMES.map((key) => [key, t(`theme.${key}`)]),
@@ -1035,11 +1055,21 @@ function renderColorChoice() {
   }
 }
 
+let newGameOpponent = prefs.opponent;
+function renderOpponentChoice(elo) {
+  const opponents = Object.entries(engine.OPPONENTS).map(([key, { name }]) => [key, name]);
+  segmented($("opponent-input"), opponents, newGameOpponent, (value) => {
+    newGameOpponent = value;
+    renderOpponentChoice(Number($("new-elo-input").value));
+  });
+  setLevelInput(newGameOpponent, elo);
+}
+
 function openNewGame() {
   newGameColor = prefs.playerColor;
+  newGameOpponent = engine.OPPONENTS[prefs.opponent] ? prefs.opponent : "stockfish";
   renderColorChoice();
-  $("new-elo-input").value = prefs.elo;
-  $("new-elo-value").textContent = prefs.elo;
+  renderOpponentChoice(prefs.elo);
   $("sheet-new").showModal();
 }
 
@@ -1050,7 +1080,7 @@ function renderGamesList() {
     const { plies, result } = tree.summary(g);
     const open = el("button", { className: "open" });
     const date = new Date(g.updatedAt).toLocaleString(language(), { dateStyle: "short", timeStyle: "short" });
-    const defaultTitle = t("games.title", { side: sideName(g.playerColor), elo: g.elo });
+    const defaultTitle = t("games.title", { side: sideName(g.playerColor), engine: opponentName(g), elo: g.elo });
     open.append(
       el("span", { textContent: g.name || defaultTitle }),
       el("small", { textContent: t("games.summary", { date, moves: Math.ceil(plies / 2), result: result || t("games.ongoing") }) }),
@@ -1152,16 +1182,7 @@ function bind() {
     dialog.addEventListener("click", (event) => event.target === dialog && dialog.close());
   }
 
-  $("elo-input").oninput = (event) => ($("elo-value").textContent = event.target.value);
-  $("elo-input").onchange = (event) => {
-    game.elo = Number(event.target.value);
-    prefs.elo = game.elo;
-    storage.savePrefs(prefs);
-    persist();
-    render();
-  };
   $("new-elo-input").oninput = (event) => ($("new-elo-value").textContent = event.target.value);
-  $("coordinates-input").onchange = (event) => updatePrefs({ coordinates: event.target.checked });
   $("sound-input").onchange = (event) => updatePrefs({ sound: event.target.checked });
   $("rage-input").onchange = (event) => {
     updatePrefs({ rageQuit: event.target.checked });
@@ -1176,11 +1197,27 @@ function bind() {
       renderColorChoice();
     }
   };
-  $("new-game-form").onsubmit = (event) => {
+  $("new-game-form").onsubmit = async (event) => {
     event.preventDefault();
     const fen = $("fen-input").value.trim();
     if (fen && !validateFen(fen).ok) return toast(t("fen.invalid", { error: validateFen(fen).error }));
-    startNewGame(newGameColor, Number($("new-elo-input").value), fen);
+    const elo = Number($("new-elo-input").value);
+    if (newGameOpponent === "maia") {
+      // The network is downloaded (and cached) before the game, not at Maia's first move
+      const start = $("new-start");
+      start.disabled = true;
+      start.textContent = t("new.downloading");
+      try {
+        await engine.preloadMaia(elo);
+      } catch (error) {
+        console.warn(error);
+        return toast(t("maia.unavailable"));
+      } finally {
+        start.disabled = false;
+        start.textContent = t("new.start");
+      }
+    }
+    startNewGame(newGameColor, elo, fen, newGameOpponent);
     $("fen-input").value = "";
     $("sheet-new").close();
   };

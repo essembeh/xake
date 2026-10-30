@@ -7,3 +7,7 @@ __pycache__/
 .coverage
 htmlcov/
 .env
+
+# Maia assets (spec 006): 46 MB, fetched by `just maia-assets` and by the image build, never committed
+src/xake/static/vendor/onnxruntime/
+src/xake/static/vendor/maia/

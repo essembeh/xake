@@ -33,8 +33,12 @@ update-dependencies:
     uv sync
     GITHUB_TOKEN=$(gh auth token) uvx gha-update
 
+# Maia opponent assets (~46 MB, not committed, spec 006): downloaded once, checked by SHA-256
+maia-assets:
+    ./scripts/fetch-maia.sh
+
 # Web app with hot reload, reachable from the LAN (phone testing)
-webapp:
+webapp: maia-assets
     uv run -- uvicorn xake.webapp:app --reload --host 0.0.0.0 --port 8000
 
 alias run := webapp

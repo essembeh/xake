@@ -34,7 +34,8 @@ No sign-up, no account: open the page and play.
 
 ## Features
 
-- **Opponent at any level**: Stockfish from 400 to 3190 Elo, adjustable at any time during a game.
+- **Opponent at any level**, chosen for each new game: Stockfish from 400 to 3190 Elo, or Maia
+  from 1100 to 1900, a network trained on human games that plays like a player of that level.
 - **Best moves on demand** (`B`, or hold a right click / long press on the board): up to 5
   Stockfish lines, numbered and colour-coded arrows on the board, the same numbers in the list;
   tap a line to play it.
@@ -78,8 +79,12 @@ plain JavaScript modules without any build step, with
 [chessground](https://github.com/lichess-org/chessground) (the Lichess board) and
 [chess.js](https://github.com/jhlywa/chess.js).
 
-- The opponent plays with `UCI_LimitStrength` / `UCI_Elo` (1320+), a node-starved engine below.
-  The Elo is indicative: Stockfish calibrates it on long games.
+- The opponent is picked at each new game. Stockfish plays with `UCI_LimitStrength` / `UCI_Elo`
+  (1320+), a node-starved engine below; the Elo is indicative, Stockfish calibrates it on long games.
+  [Maia](https://github.com/CSSLab/maia-chess) is a network trained on Lichess games, one per 100
+  points from 1100 to 1900, run by [ONNX Runtime Web](https://onnxruntime.ai/); its move is drawn
+  among the human moves at least 10% likely. The network (3.5 MB, plus 15 MB for the runtime once)
+  is downloaded when the game starts.
 - Best moves and the evaluation bar search a fixed 1 million nodes (about 1 s on a recent phone),
   so the same answer on every browser, capped at 2 s on slow devices; the evaluation graph uses
   300,000 nodes per position.
@@ -142,6 +147,8 @@ Every dependency and bundled asset is under a free licence compatible with the G
 | Component | Used for | Licence |
 | --- | --- | --- |
 | [Stockfish](https://stockfishchess.org/) via [stockfish.js](https://github.com/nmrugg/stockfish.js) | chess engine in WebAssembly, opponent and analysis (vendored) | GPL-3.0 |
+| [Maia](https://github.com/CSSLab/maia-chess) networks, [ONNX conversion](https://huggingface.co/cstr/maia-chess-onnx-opset15) | human-like opponent (fetched at build) | GPL-3.0 |
+| [ONNX Runtime Web](https://onnxruntime.ai/) | runs Maia in WebAssembly (fetched at build) | MIT |
 | [FastAPI](https://fastapi.tiangolo.com/) / [Starlette](https://www.starlette.io/) | static files, settings, probes | MIT / BSD-3-Clause |
 | [Uvicorn](https://www.uvicorn.org/) | ASGI server | BSD-3-Clause |
 | [Pydantic](https://docs.pydantic.dev/) / [pydantic-settings](https://github.com/pydantic/pydantic-settings) | `XAKE_*` settings | MIT |
@@ -150,6 +157,8 @@ Every dependency and bundled asset is under a free licence compatible with the G
 | [chess.js](https://github.com/jhlywa/chess.js) | rules, SAN, PGN in the browser (vendored) | BSD-2-Clause |
 | [Lichess](https://github.com/lichess-org/lila) piece sets | `cburnett`, `merida` / `mpchess` / `pixel` (vendored) | GPLv2+ / GPLv3+ / AGPLv3+ |
 
+The Maia networks and ONNX Runtime (~46 MB) are not committed: [`scripts/fetch-maia.sh`](scripts/fetch-maia.sh)
+fetches them with pinned SHA-256 sums, from `just webapp` and from the image build.
 Front-end assets are pinned and fetched by [`scripts/vendor.sh`](scripts/vendor.sh), with the
 lila [`COPYING.md`](src/xake/static/vendor/pieces/COPYING.md) that lists their authors and licences.
 Several Lichess piece sets are not free and are left out. The boards are plain CSS colours and the
