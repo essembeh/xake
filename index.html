@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#161512" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Xake" />
+    <title>Xake</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <!-- PNG too: Firefox on iOS makes its home screen shortcut from the favicon and cannot use the SVG -->
+    <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192" />
+    <link rel="icon" href="icons/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <style id="piece-style"></style>
+    <!-- Service settings (default language, Elo): rewritten by the Docker image, read before main.js -->
+    <script src="config.js"></script>
+    <script>
+      // Apply the stored UI theme before first paint to avoid a light/dark flash.
+      try {
+        const prefs = JSON.parse(localStorage.getItem("xake:v1:prefs") || "{}");
+        if (prefs.uiTheme && prefs.uiTheme !== "auto") document.documentElement.dataset.theme = prefs.uiTheme;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="i-first" viewBox="0 0 24 24"><path d="M6 5v14M18 6l-7 6 7 6" /></symbol>
+      <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></symbol>
+      <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></symbol>
+      <symbol id="i-last" viewBox="0 0 24 24"><path d="M18 5v14M6 6l7 6-7 6" /></symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5M4 12h11a5 5 0 0 1 0 10h-2" /></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-5-6 5z" /></symbol>
+      <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M10.23 4.61L10.67 2.09H13.33L13.77 4.61L15.97 5.52L18.07 4.05L19.95 5.93L18.48 8.03L19.39 10.23L21.91 10.67V13.33L19.39 13.77L18.48 15.97L19.95 18.07L18.07 19.95L15.97 18.48L13.77 19.39L13.33 21.91H10.67L10.23 19.39L8.03 18.48L5.93 19.95L4.05 18.07L5.52 15.97L4.61 13.77L2.09 13.33V10.67L4.61 10.23L5.52 8.03L4.05 5.93L5.93 4.05L8.03 5.52Z"
+        />
+      </symbol>
+      <symbol id="i-flip" viewBox="0 0 24 24"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4" /></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+      <symbol id="i-keyboard" viewBox="0 0 24 24">
+        <rect x="2" y="6" width="20" height="12" rx="2" />
+        <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
+      </symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24">
+        <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z" />
+      </symbol>
+      <symbol id="i-gauge" viewBox="0 0 24 24">
+        <rect x="8" y="3" width="8" height="18" rx="1.5" />
+        <path d="M8 13h8" />
+      </symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-4 3 3 6-6" /></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24">
+        <path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6" />
+      </symbol>
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <circle cx="8" cy="8" r="3" />
+        <circle cx="16" cy="8" r="3" />
+        <path d="M2 20a6 6 0 0 1 12 0M10 20a6 6 0 0 1 12 0" />
+      </symbol>
+      <!-- Flags carry their own colours: drawn with stroke="none", they ignore the `button svg` stroke -->
+      <symbol id="i-flag-en" viewBox="0 0 60 30">
+        <clipPath id="flag-en-frame"><path d="M0 0v30h60V0z" /></clipPath>
+        <clipPath id="flag-en-half"><path d="M30 15h30v15zv15H0zH0V0zV0h30z" /></clipPath>
+        <g clip-path="url(#flag-en-frame)">
+          <path d="M0 0v30h60V0z" fill="#012169" stroke="none" />
+          <path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6" />
+          <path d="M0 0l60 30m0-30L0 30" clip-path="url(#flag-en-half)" stroke="#c8102e" stroke-width="4" />
+          <path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10" />
+          <path d="M30 0v30M0 15h60" stroke="#c8102e" stroke-width="6" />
+        </g>
+      </symbol>
+      <symbol id="i-flag-fr" viewBox="0 0 3 2">
+        <g stroke="none">
+          <path d="M0 0h1v2H0z" fill="#002395" />
+          <path d="M1 0h1v2H1z" fill="#fff" />
+          <path d="M2 0h1v2H2z" fill="#ed2939" />
+        </g>
+      </symbol>
+      <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-4-4M20 16H6l4 4" /></symbol>
+    </svg>
+
+    <header class="topbar">
+      <div class="brand">
+        <img src="icons/icon.svg" alt="" width="28" height="28" />
+        <span>Xake</span>
+      </div>
+      <span class="spacer"></span>
+      <button id="btn-rage" class="tb-btn rage" data-i18n-title="tb.rageTitle" hidden>
+        <i class="rage-icon" aria-hidden="true">😤</i><span data-i18n="tb.rage">Rage quit</span>
+      </button>
+      <button id="btn-new" class="tb-btn" data-i18n-title="tb.newTitle">
+        <svg><use href="#i-plus" /></svg><span data-i18n="tb.new">New game</span>
+      </button>
+      <button id="btn-share" class="tb-btn" data-i18n-title="tb.shareTitle">
+        <svg><use href="#i-share" /></svg><span data-i18n="tb.share">Share</span>
+      </button>
+      <button id="btn-games" class="tb-btn" data-i18n-title="tb.gamesTitle">
+        <svg><use href="#i-list" /></svg><span data-i18n="tb.games">Games</span>
+      </button>
+      <button id="btn-help" class="tb-btn desktop-only" data-i18n-title="tb.help">
+        <svg><use href="#i-keyboard" /></svg>
+      </button>
+      <button id="btn-settings" class="tb-btn" data-i18n-title="tb.settings">
+        <svg><use href="#i-settings" /></svg>
+      </button>
+    </header>
+
+    <main class="layout">
+      <section class="board-col">
+        <div class="strip" id="strip-top"></div>
+        <div class="board-row">
+          <div id="evalbar" class="evalbar" data-i18n-aria="card.evaluation">
+            <div class="evalbar-white"></div>
+            <div class="evalbar-mid"></div>
+            <span class="evalbar-label"></span>
+          </div>
+          <div class="board-frame">
+            <div id="board" class="board"></div>
+            <div id="gameover" class="gameover" hidden></div>
+          </div>
+        </div>
+        <div class="strip" id="strip-bottom"></div>
+      </section>
+
+      <section class="side">
+        <nav class="controls">
+          <button id="btn-first" class="ctrl" data-i18n-title="ctrl.first" data-i18n-aria="ctrl.first">
+            <svg><use href="#i-first" /></svg>
+          </button>
+          <button id="btn-prev" class="ctrl" data-i18n-title="ctrl.prev" data-i18n-aria="ctrl.prev">
+            <svg><use href="#i-prev" /></svg>
+          </button>
+          <button id="btn-next" class="ctrl" data-i18n-title="ctrl.next" data-i18n-aria="ctrl.next">
+            <svg><use href="#i-next" /></svg>
+          </button>
+          <button id="btn-last" class="ctrl" data-i18n-title="ctrl.last" data-i18n-aria="ctrl.last">
+            <svg><use href="#i-last" /></svg>
+          </button>
+          <button id="btn-undo" class="ctrl" data-i18n-title="ctrl.undo" data-i18n-aria="ctrl.undo">
+            <svg><use href="#i-undo" /></svg>
+          </button>
+          <button id="btn-bookmark" class="ctrl" data-i18n-title="ctrl.bookmark" data-i18n-aria="ctrl.bookmark">
+            <svg><use href="#i-bookmark" /></svg>
+          </button>
+          <button id="btn-swap" class="ctrl" data-i18n-title="ctrl.swap" data-i18n-aria="ctrl.swap">
+            <svg><use href="#i-swap" /></svg>
+          </button>
+        </nav>
+
+        <div class="toggles">
+          <button id="btn-best" class="toggle" aria-pressed="false" data-i18n-title="toggle.bestTitle">
+            <svg><use href="#i-bulb" /></svg><span data-i18n="toggle.best">Show best moves</span><kbd>B</kbd>
+          </button>
+          <button id="btn-analysis" class="toggle" aria-pressed="true" data-i18n-title="toggle.analysisTitle">
+            <svg><use href="#i-gauge" /></svg><span data-i18n="toggle.analysis">Display evaluation bar</span
+            ><kbd>A</kbd>
+          </button>
+          <button id="btn-two-sides" class="toggle" aria-pressed="false" data-i18n-title="toggle.twoSidesTitle">
+            <svg><use href="#i-users" /></svg><span data-i18n="toggle.twoSides">Play both sides</span><kbd>T</kbd>
+          </button>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div id="lines" class="lines" hidden></div>
+
+        <div class="card moves-card">
+          <div id="moves" class="moves"></div>
+        </div>
+
+        <button id="btn-review" class="toggle review-toggle" aria-pressed="false" data-i18n-title="toggle.reviewTitle">
+          <svg><use href="#i-chart" /></svg><span data-i18n="toggle.review">Analyse the game</span><kbd>R</kbd>
+        </button>
+      </section>
+
+      <aside class="insights">
+        <section id="timeline-card" class="card">
+          <header class="card-head">
+            <h2 data-i18n="card.evaluation">Evaluation</h2>
+            <span id="timeline-progress" class="muted"></span>
+          </header>
+          <div id="timeline" class="timeline"></div>
+          <div id="timeline-legend" class="legend">
+            <span><i class="dot best"></i><span data-i18n="judgement.best">Best move</span></span>
+            <span><i class="dot inaccuracy"></i><span data-i18n="judgement.inaccuracy">Inaccuracy</span></span>
+            <span><i class="dot mistake"></i><span data-i18n="judgement.mistake">Mistake</span></span>
+            <span><i class="dot blunder"></i><span data-i18n="judgement.blunder">Blunder</span></span>
+          </div>
+        </section>
+
+        <section id="bookmarks-section" class="card" hidden>
+          <header class="card-head"><h2 data-i18n="card.bookmarks">Bookmarks</h2></header>
+          <ul id="bookmarks" class="bookmarks"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span>Xake <span id="app-version"></span></span>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/essembeh/xake" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"
+          />
+        </svg>
+        <span data-i18n="footer.source">Source code on GitHub</span>
+      </a>
+      <span aria-hidden="true">·</span>
+      <span data-i18n="footer.engine">Powered by Stockfish</span>
+    </footer>
+
+    <dialog id="sheet-settings" class="sheet">
+      <header class="sheet-head">
+        <h2 data-i18n="settings.title">Settings</h2>
+        <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus>
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.language">Language</h3>
+        <div id="language-input" class="segmented"></div>
+      </section>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.sectionAppearance">Appearance</h3>
+        <div class="field">
+          <span data-i18n="settings.theme">Theme</span>
+          <div id="ui-theme-input" class="segmented"></div>
+        </div>
+        <div class="field">
+          <span data-i18n="settings.board">Board</span>
+          <div id="board-theme-input" class="swatches"></div>
+        </div>
+        <div class="field">
+          <span data-i18n="settings.pieces">Pieces</span>
+          <div id="piece-set-input" class="piece-sets"></div>
+        </div>
+      </section>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.sectionAnalysis">Analysis</h3>
+        <div class="field">
+          <span data-i18n="settings.multipv">Number of best moves</span>
+          <div id="multipv-input" class="segmented"></div>
+        </div>
+      </section>
+      <section class="sheet-section">
+        <h3 data-i18n="settings.sectionGame">Game</h3>
+        <label class="field inline">
+          <input id="sound-input" type="checkbox" />
+          <span data-i18n="settings.sound">Sounds</span>
+        </label>
+        <label class="field inline">
+          <input id="rage-input" type="checkbox" />
+          <span data-i18n="settings.rage">"Rage quit" button, when you are losing</span>
+        </label>
+      </section>
+    </dialog>
+
+    <dialog id="sheet-new" class="sheet">
+      <header class="sheet-head">
+        <h2 data-i18n="new.title">New game</h2>
+        <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus>
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <form id="new-game-form">
+        <div class="field">
+          <span data-i18n="new.iPlay">I play</span>
+          <div class="color-tiles" id="color-input">
+            <button type="button" data-value="white">
+              <span class="piece"><img data-piece="white" alt="" /></span>
+              <span data-i18n="side.white">White</span>
+            </button>
+            <button type="button" data-value="random">
+              <span class="piece half"><img data-piece="white" alt="" /><img data-piece="black" alt="" /></span>
+              <span data-i18n="new.random">Random</span>
+            </button>
+            <button type="button" data-value="black">
+              <span class="piece"><img data-piece="black" alt="" /></span>
+              <span data-i18n="side.black">Black</span>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <span data-i18n="new.opponent">Opponent</span>
+          <div id="opponent-input" class="segmented"></div>
+        </div>
+        <label class="field">
+          <span><span id="new-elo-label">Stockfish level:</span> <b id="new-elo-value">1500</b></span>
+          <input id="new-elo-input" type="range" min="400" max="3190" step="10" />
+          <small id="new-elo-hint">Indicative. Below 1320 the level is simulated (handicapped engine).</small>
+        </label>
+        <details class="field">
+          <summary data-i18n="new.custom">Custom starting position</summary>
+          <input id="fen-input" type="text" placeholder="FEN" autocomplete="off" spellcheck="false" />
+        </details>
+        <button id="new-start" type="submit" class="primary wide" data-i18n="new.start">Start</button>
+      </form>
+    </dialog>
+
+    <dialog id="sheet-games" class="sheet">
+      <header class="sheet-head">
+        <h2 data-i18n="games.sheetTitle">Games</h2>
+        <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus>
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <div class="field">
+        <span data-i18n="games.current">Current game</span>
+        <div class="row">
+          <button id="btn-copy-link" type="button" data-i18n="games.copyLink">Copy link</button>
+          <button id="btn-export" type="button" data-i18n="games.exportPgn">Export PGN</button>
+          <button id="btn-copy-pgn" type="button" data-i18n="games.copyPgn">Copy PGN</button>
+        </div>
+      </div>
+      <div class="field">
+        <span data-i18n="games.previous">Previous games</span>
+        <ul id="games-list" class="games-list"></ul>
+      </div>
+      <details class="field">
+        <summary data-i18n="games.import">Import a PGN</summary>
+        <textarea id="pgn-input" rows="5" data-i18n-placeholder="games.paste"></textarea>
+        <div class="row">
+          <label class="file-btn"
+            ><span data-i18n="games.file">File…</span><input id="pgn-file" type="file" accept=".pgn,text/plain" hidden
+          /></label>
+          <button id="btn-import" type="button" class="primary" data-i18n="games.importButton">Import</button>
+        </div>
+        <small data-i18n="games.importHint">Only the main line is imported (variations are ignored).</small>
+      </details>
+    </dialog>
+
+    <dialog id="sheet-help" class="sheet">
+      <header class="sheet-head">
+        <h2 data-i18n="help.title">Keyboard shortcuts</h2>
+        <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus>
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <dl class="shortcuts">
+        <dt><kbd>←</kbd> <kbd>→</kbd></dt>
+        <dd data-i18n="help.nav"></dd>
+        <dt><kbd>↑</kbd> <kbd>↓</kbd></dt>
+        <dd data-i18n="help.ends"></dd>
+        <dt><kbd>B</kbd> <kbd data-i18n="help.space"></kbd></dt>
+        <dd data-i18n="help.best"></dd>
+        <dt><kbd>A</kbd></dt>
+        <dd data-i18n="help.analysis"></dd>
+        <dt><kbd>R</kbd></dt>
+        <dd data-i18n="help.review"></dd>
+        <dt><kbd>T</kbd></dt>
+        <dd data-i18n="help.twoSides"></dd>
+        <dt><kbd>C</kbd></dt>
+        <dd data-i18n="help.swap"></dd>
+        <dt><kbd>U</kbd> <kbd>⌫</kbd></dt>
+        <dd data-i18n="help.undo"></dd>
+        <dt><kbd>M</kbd></dt>
+        <dd data-i18n="help.bookmark"></dd>
+        <dt><kbd>F</kbd></dt>
+        <dd data-i18n="help.flip"></dd>
+        <dt><kbd>N</kbd></dt>
+        <dd data-i18n="help.new"></dd>
+        <dt><kbd>S</kbd></dt>
+        <dd data-i18n="help.share"></dd>
+        <dt><kbd>?</kbd></dt>
+        <dd data-i18n="help.help"></dd>
+        <dt><kbd data-i18n="help.rightClick"></kbd></dt>
+        <dd data-i18n="help.peek"></dd>
+      </dl>
+    </dialog>
+
+    <div id="promotion" class="promotion" hidden></div>
+    <div id="toast" class="toast" role="status" hidden></div>
+
+    <script type="module" src="./src/js/main.js"></script>
+  </body>
+</html>

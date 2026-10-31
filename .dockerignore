@@ -1,42 +1,12 @@
-# Python
-__pycache__/
-*.py[cod]
-build/
-dist/
-
-# Tools
-.env
-.envrc
-.direnv/
-.venv/
-.python-version
-.mypy_cache/
-.ruff_cache/
-shell.nix
-
-# Tests and coverage
-tests/
-.coverage
-.pytest_cache/
-.coverage.*
-coverage.xml
-htmlcov/
-
-# Docker
-Dockerfile*
-.dockerignore
-docker-compose*.yml
-
-# Git
-.git
-.gitignore
-
-# CI/CD, chart, docs and tooling: not part of the image
-.github/
-charts/
-docs/
-scripts/
+# Only what the build needs: sources, public files, npm manifests and the Maia fetch script
+*
+!index.html
+!src/
+!public/
+!package.json
+!package-lock.json
+!vite.config.js
 !scripts/fetch-maia.sh
-# Maia assets: fetched by the image build itself, never taken from a local checkout
-src/xake/static/vendor/onnxruntime/
-src/xake/static/vendor/maia/
+!docker/
+# Maia networks: fetched by the image build itself, never taken from a local checkout
+public/maia/

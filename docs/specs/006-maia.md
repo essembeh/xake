@@ -99,6 +99,8 @@
    corrompus) : appelé par `just webapp` (recette `maia-assets`, 0,1 s quand tout est là) et par un
    stage `assets` du `Dockerfile` (Alpine + curl), copié dans les sources avant `uv sync`. Le
    `.dockerignore` exclut les copies locales : l'image ne dépend pas du poste. Image : 145 → 191 Mo.
+   **Depuis la spec 007** : ONNX Runtime vient de npm (regroupé par Vite), le script ne télécharge
+   plus que les réseaux, vers `public/maia/`, avant `npm run dev` et `npm run build`.
 4. **Hors ligne** : Maia n'est mis en cache qu'après un premier coup joué en ligne (chargé à la
    demande, après la liste envoyée au service worker, spec 005 §11).
 5. ~~**Jeu déterministe**~~ : réglé par le tirage pondéré au seuil de 10 % (§4).

@@ -1,73 +1,24 @@
-# Multi-stage build: uv builds the venv in a build stage, the final image only gets the .venv.
-
-# Pinned versions, updated in the dependency bump commit along with uv.lock.
-ARG UV_VERSION=0.11.21
-ARG PYTHON_VERSION=3.13
-ARG ALPINE_VERSION=3.22
+# Static site (spec 007): Node builds it, nginx serves it. Pinned versions, bumped with the npm dependencies.
+ARG NODE_VERSION=24
+ARG NGINX_VERSION=1.31
 
 #########################################
-## Stage: uv (official image, pinned version)
-FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv
-
-#########################################
-## Stage: assets — Maia opponent files, too big to be committed, checked by SHA-256 (spec 006)
-FROM alpine:${ALPINE_VERSION} AS assets
+## Stage: build — npm ci, then the Vite build with the Maia networks (fetched, SHA-256 checked)
+FROM node:${NODE_VERSION}-alpine AS build
 
 RUN apk add --no-cache curl
-COPY scripts/fetch-maia.sh /fetch-maia.sh
-RUN /fetch-maia.sh /vendor
-
-
-#########################################
-## Stage: base
-FROM python:${PYTHON_VERSION}-slim AS base
-
-RUN groupadd -r app && useradd -r -d /app -g app -N app \
- && mkdir -p /app && chown app:app /app
 WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-
-#########################################
-## Stage: builder
-FROM base AS builder
-
-COPY --from=uv /uv /usr/local/bin/uv
-
-USER app
-ENV UV_LINK_MODE=copy \
-    UV_COMPILE_BYTECODE=1 \
-    UV_PYTHON_DOWNLOADS=never
-
-# 1) Dependencies only: this layer is cached as long as pyproject.toml / uv.lock do not change.
-COPY --chown=app:app pyproject.toml uv.lock README.md ./
-RUN uv sync --locked --no-dev --no-install-project
-
-# 2) Then the project, not editable: the venv must be self-contained to be copied.
-COPY --chown=app:app src ./src
-COPY --from=assets --chown=app:app /vendor/ ./src/xake/static/vendor/
-RUN uv sync --locked --no-dev --no-editable
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
 
 #########################################
-## Stage: production
-FROM base AS production
+## Stage: webapp — nginx, non-root, port 8000
+FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}-alpine AS webapp
 
-RUN apt-get update && apt-get install -y --no-install-recommends tini && rm -rf /var/lib/apt/lists/*
-ENTRYPOINT ["tini", "--"]
-
-USER app
-COPY --from=builder --chown=app:app /app/.venv /app/.venv
-# PATH is enough: the package is installed in the venv, no PYTHONPATH needed.
-ENV PATH="/app/.venv/bin:$PATH"
-
-
-#########################################
-## Stage: webapp
-FROM production AS webapp
-
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/40-xake-config.sh /docker-entrypoint.d/
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 8000
-# No `uv run` here: PATH points to the venv, uv run would sync again at startup.
-CMD ["python", "-m", "uvicorn", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips", "*", "xake.webapp:app"]

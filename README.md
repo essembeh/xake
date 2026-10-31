@@ -4,29 +4,28 @@
 
 > **TL;DR** Play Stockfish at the Elo you choose, peek at the best moves when you want, and
 > replay your games with an evaluation graph that points at your mistakes. Runs in the browser,
-> installs on a phone home screen, stores nothing on the server.
+> installs on a phone home screen, a static site that stores nothing on any server.
 
 _Xake_ means "chess" in Basque.
 
 ## 🚀 Try the demo
 
-**https://xake.onrender.com**
+**https://essembeh.github.io/xake/**
 
 No sign-up, no account: open the page and play.
 
-> This demo is a public instance hosted on [Render](https://render.com/). Stockfish runs on your own
-> device, so it does not slow down when others play. It comes without any guarantee and can be
-> limited or stopped at any time. To keep a game safe, export it as PGN or
-> [install your own](#install).
+> This demo is published from `main` on [GitHub Pages](https://pages.github.com/). Stockfish and
+> Maia run on your own device, so it does not slow down when others play. It comes without any
+> guarantee. To keep a game safe, export it as PGN or [host your own](#install).
 
 ## 🔒 Privacy
 
 - **No sign-up, no account, no login.**
-- **Your games live in your browser** (`localStorage`), on your device only: the server has no
-  database and stores nothing. Clearing the site data deletes them, export a PGN to keep one.
+- **Your games live in your browser** (`localStorage`), on your device only: there is no backend,
+  the site is static files. Clearing the site data deletes them, export a PGN to keep one.
 - **No cookies, no analytics, no tracking, no third-party request**: every file is served by the
   instance itself.
-- **Stockfish runs on your device**: the server never sees your moves, it only serves the app.
+- **The engines run on your device**: the server never sees your moves, it only serves the files.
   Shared links carry the game after the `#`, a part of the URL browsers never send to the server.
 - Like any web server, the host may keep standard access logs (IP address, requested URL).
 
@@ -71,11 +70,10 @@ No sign-up, no account: open the page and play.
 
 ## How it works
 
-Stockfish runs in the player's browser: [stockfish.js](https://github.com/nmrugg/stockfish.js), the
-lite WebAssembly build (1.8 MB), in Web Workers. The backend is a small
-[FastAPI](https://fastapi.tiangolo.com/) service that only serves the app and its settings; the
-games live in the browser (`localStorage`) and the installed app plays offline. The front-end is
-plain JavaScript modules without any build step, with
+Xake is a static site, no backend: everything runs in the player's browser. Stockfish is
+[stockfish.js](https://github.com/nmrugg/stockfish.js), the lite WebAssembly build (1.8 MB), in Web
+Workers; the games live in the browser (`localStorage`) and the installed app plays offline. The
+front-end is plain JavaScript modules built by [Vite](https://vite.dev/), with
 [chessground](https://github.com/lichess-org/chessground) (the Lichess board) and
 [chess.js](https://github.com/jhlywa/chess.js).
 
@@ -93,35 +91,25 @@ Design notes live in [`docs/specs`](docs/specs).
 
 # Install
 
-## Helm
+## GitHub Pages or any static host
 
-```sh
-$ helm repo add xake https://essembeh.github.io/xake/
-$ helm install xake xake/xake --set xake.defaultLanguage=en
-```
-
-Values are documented in the [chart README](charts/xake/README.md). The pod is a small static
-server: the players' devices do the computing. Serve it over HTTPS, the service worker needs it.
+`npm run build` writes the whole site to `dist/` (about 47 MB with the Maia networks), with
+relative URLs: copy it to any static host, at the root or under a sub-path. Serve it over HTTPS, the
+service worker needs it. The settings below then keep their defaults (edit `dist/config.js` to
+change them).
 
 ## Docker
 
 ```sh
-$ docker run --rm -p 8000:8000 ghcr.io/essembeh/xake:main
+$ docker run --rm -p 8000:8000 ghcr.io/essembeh/xake:latest
 ```
 
-Then open http://localhost:8000/.
-
-## From source
-
-```sh
-$ git clone https://github.com/essembeh/xake
-$ cd xake
-$ nix-shell     # or install uv and just yourself
-$ uv sync
-$ just webapp   # http://localhost:8000, also reachable from your LAN
-```
+Then open http://localhost:8000/. The image is nginx (non-root) serving the built site; images are
+tagged `latest` and by version (`0.3.0`), `main` follows the development branch.
 
 ## Configuration
+
+The Docker image reads these variables at start (an invalid value stops the container):
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -131,14 +119,25 @@ $ just webapp   # http://localhost:8000, also reachable from your LAN
 
 # Development
 
+Node.js 24, then:
+
 ```sh
-$ just check        # ruff format + ruff check + mypy (CI: python-check)
-$ just test         # pytest (CI: python-test)
-$ just chart        # helm lint + template (CI: helm-lint)
-$ just docker       # build and run the image with podman
-$ just screenshots  # regenerate the README screenshots from a running `just webapp`
-$ just vendor       # refresh the pinned front-end libraries and piece sets
+$ git clone https://github.com/essembeh/xake
+$ cd xake
+$ npm ci
+$ npm run dev          # http://localhost:8000 with hot reload, also reachable from your LAN
 ```
+
+| Script | What |
+| --- | --- |
+| `npm run dev` | dev server on port 8000 (fetches the Maia networks first) |
+| `npm run build` / `npm run preview` | build the site into `dist/` / serve it |
+| `npm run lint` / `npm run format` | Prettier, check / fix (CI: lint) |
+| `npm test` | smoke test of the engines in Chromium and WebKit, Playwright (CI: e2e) |
+| `npm run screenshots` | regenerate the README screenshots from a running dev server |
+| `npm run release -- <patch\|minor\|major>` | release: bump, commit `🔖 New release: X.Y.Z` and tag, then push |
+
+On NixOS, Playwright needs the browsers of nixpkgs: `scripts/nix-playwright.sh npm test`.
 
 # Libraries and assets
 
@@ -146,21 +145,18 @@ Every dependency and bundled asset is under a free licence compatible with the G
 
 | Component | Used for | Licence |
 | --- | --- | --- |
-| [Stockfish](https://stockfishchess.org/) via [stockfish.js](https://github.com/nmrugg/stockfish.js) | chess engine in WebAssembly, opponent and analysis (vendored) | GPL-3.0 |
+| [Stockfish](https://stockfishchess.org/) via [stockfish.js](https://github.com/nmrugg/stockfish.js) | chess engine in WebAssembly, opponent and analysis (npm) | GPL-3.0 |
 | [Maia](https://github.com/CSSLab/maia-chess) networks, [ONNX conversion](https://huggingface.co/cstr/maia-chess-onnx-opset15) | human-like opponent (fetched at build) | GPL-3.0 |
-| [ONNX Runtime Web](https://onnxruntime.ai/) | runs Maia in WebAssembly (fetched at build) | MIT |
-| [FastAPI](https://fastapi.tiangolo.com/) / [Starlette](https://www.starlette.io/) | static files, settings, probes | MIT / BSD-3-Clause |
-| [Uvicorn](https://www.uvicorn.org/) | ASGI server | BSD-3-Clause |
-| [Pydantic](https://docs.pydantic.dev/) / [pydantic-settings](https://github.com/pydantic/pydantic-settings) | `XAKE_*` settings | MIT |
-| [Loguru](https://github.com/Delgan/loguru) | logging | MIT |
-| [chessground](https://github.com/lichess-org/chessground) | board (vendored) | GPL-3.0 |
-| [chess.js](https://github.com/jhlywa/chess.js) | rules, SAN, PGN in the browser (vendored) | BSD-2-Clause |
-| [Lichess](https://github.com/lichess-org/lila) piece sets | `cburnett`, `merida` / `mpchess` / `pixel` (vendored) | GPLv2+ / GPLv3+ / AGPLv3+ |
+| [ONNX Runtime Web](https://onnxruntime.ai/) | runs Maia in WebAssembly (npm) | MIT |
+| [chessground](https://github.com/lichess-org/chessground) | board (npm) | GPL-3.0 |
+| [chess.js](https://github.com/jhlywa/chess.js) | rules, SAN, PGN in the browser (npm) | BSD-2-Clause |
+| [Lichess](https://github.com/lichess-org/lila) piece sets | `cburnett`, `merida` / `mpchess` / `pixel` (committed) | GPLv2+ / GPLv3+ / AGPLv3+ |
+| [nginx](https://nginx.org/) | static server of the Docker image | BSD-2-Clause |
 
-The Maia networks and ONNX Runtime (~46 MB) are not committed: [`scripts/fetch-maia.sh`](scripts/fetch-maia.sh)
-fetches them with pinned SHA-256 sums, from `just webapp` and from the image build.
-Front-end assets are pinned and fetched by [`scripts/vendor.sh`](scripts/vendor.sh), with the
-lila [`COPYING.md`](src/xake/static/vendor/pieces/COPYING.md) that lists their authors and licences.
+The libraries come from npm, pinned by `package-lock.json`. The Maia networks (31 MB) are not on
+npm and not committed: [`scripts/fetch-maia.sh`](scripts/fetch-maia.sh) fetches them with pinned
+SHA-256 sums before `npm run dev` and `npm run build`. The piece sets are committed, with the lila
+[`COPYING.md`](public/pieces/COPYING.md) that lists their authors and licences.
 Several Lichess piece sets are not free and are left out. The boards are plain CSS colours and the
 sounds are synthesized in the browser (WebAudio), no audio file is bundled.
 

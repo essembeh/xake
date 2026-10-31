@@ -1,0 +1,39 @@
+{
+  "name": "xake",
+  "version": "0.3.0",
+  "description": "Chess training web app: play Stockfish or Maia at your level, analyse your games",
+  "license": "GPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "repository": "github:essembeh/xake",
+  "engines": {
+    "node": "^24"
+  },
+  "scripts": {
+    "predev": "scripts/fetch-maia.sh",
+    "dev": "vite",
+    "prebuild": "scripts/fetch-maia.sh",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "prettier --check src e2e scripts public/sw.js public/config.js index.html vite.config.js playwright.config.js .github",
+    "format": "prettier --write src e2e scripts public/sw.js public/config.js index.html vite.config.js playwright.config.js .github",
+    "test": "playwright test",
+    "screenshots": "node scripts/screenshots.js",
+    "release": "npm version --tag-version-prefix= --message '🔖 New release: %s'"
+  },
+  "dependencies": {
+    "chess.js": "1.4.0",
+    "chessground": "9.2.1",
+    "onnxruntime-web": "1.31.1",
+    "stockfish": "19.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.59.1",
+    "prettier": "^3.9.10",
+    "vite": "^8.3.5",
+    "vite-plugin-static-copy": "^4.1.1"
+  },
+  "prettier": {
+    "printWidth": 120
+  }
+}

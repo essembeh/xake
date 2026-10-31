@@ -1,12 +1,10 @@
 #!/bin/sh
-# Fetch the Maia opponent assets (ONNX Runtime Web + 9 networks, ~46 MB, spec 006) into a vendor
-# directory, checked against pinned SHA-256. Too big to be committed: run by `just webapp` and the image build.
+# Fetch the 9 Maia networks (31 MB, spec 006), checked against pinned SHA-256. Not on npm and too big
+# to be committed: run before `npm run dev` and `npm run build` (spec 007 §2.2).
 set -eu
 
-VENDOR=${1:-$(cd "$(dirname "$0")/.." && pwd)/src/xake/static/vendor}
+DEST=${1:-$(cd "$(dirname "$0")/.." && pwd)/public/maia}
 
-ONNXRUNTIME_VERSION=1.31.1
-ONNXRUNTIME_SHA256=bdccdb9fbb9ab537247c0c734e9b1d2b1b338b4f2a09faa58f0dc1cfa27c312c
 # Maia 1 weights converted to ONNX (GPL-3.0, CSSLab/maia-chess), pinned revision
 MAIA_REPO=https://huggingface.co/cstr/maia-chess-onnx-opset15/resolve/922d3659cdbab3168bb52b06d2a43b41872dd798
 MAIA_SHA256="
@@ -21,22 +19,8 @@ cbf1e98e02dad263508c3b943361e7e43f0e28e12903ab5db953cded1ab0ebee  maia-1800.onnx
 f72492271f6476cd249546b3d790b35db50107a0623a5a08066bf7b28ea04e72  maia-1900.onnx
 "
 
-mkdir -p "$VENDOR/onnxruntime" "$VENDOR/maia"
-
-if [ ! -f "$VENDOR/onnxruntime/ort-wasm-simd-threaded.wasm" ]; then
-    TMP=$(mktemp -d)
-    trap 'rm -rf "$TMP"' EXIT
-    curl -fsSL -o "$TMP/ort.tgz" "https://registry.npmjs.org/onnxruntime-web/-/onnxruntime-web-$ONNXRUNTIME_VERSION.tgz"
-    echo "$ONNXRUNTIME_SHA256  $TMP/ort.tgz" | sha256sum -c >/dev/null
-    tar xzf "$TMP/ort.tgz" -C "$TMP"
-    cp "$TMP/package/dist/ort.wasm.min.mjs" "$TMP/package/dist/ort-wasm-simd-threaded.mjs" \
-        "$TMP/package/dist/ort-wasm-simd-threaded.wasm" "$VENDOR/onnxruntime/"
-    # The npm package ships no licence file: MIT, from the release tag
-    curl -fsSL -o "$VENDOR/onnxruntime/LICENSE" \
-        "https://raw.githubusercontent.com/microsoft/onnxruntime/v$ONNXRUNTIME_VERSION/LICENSE"
-fi
-
-cd "$VENDOR/maia"
+mkdir -p "$DEST"
+cd "$DEST"
 echo "$MAIA_SHA256" | while read -r sum name; do
     [ -n "$name" ] || continue
     if ! echo "$sum  $name" | sha256sum -c >/dev/null 2>&1; then
@@ -44,4 +28,4 @@ echo "$MAIA_SHA256" | while read -r sum name; do
         echo "$sum  $name" | sha256sum -c >/dev/null
     fi
 done
-echo "Maia assets ready in $VENDOR (onnxruntime-web $ONNXRUNTIME_VERSION, 9 networks)"
+echo "Maia networks ready in $DEST"

@@ -6,59 +6,47 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  # Same commands as `just check`
-  python-check:
-    name: Lint, format and typing
+  # Same command as `npm run lint`
+  lint:
+    name: Formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          enable-cache: true
-      - run: uv sync --locked
-      - run: uv run --no-sync ruff format --check src tests
-      - run: uv run --no-sync ruff check src tests
-      - run: uv run --no-sync mypy src tests
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
 
-  # Same command as `just test`
-  python-test:
-    name: Unit tests
+  # Same command as `npm test`: the engines only run in a browser (spec 007 §2.8)
+  e2e:
+    name: Smoke test in Chromium and WebKit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          enable-cache: true
-      - run: uv sync --locked
-      - run: uv run --no-sync -- pytest --cov=xake --cov-report=term-missing
-
-  # Same command as `just audit`
-  python-audit:
-    name: Dependency audit
-    runs-on: ubuntu-latest
-    # Informative for now: a new advisory must not block a release by itself
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      # Maia networks from Hugging Face, fetched again only when their pinned list changes
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          enable-cache: true
-      - run: uv sync --locked
-      - run: uv run --no-sync -- pip-audit
-
-  # Same commands as `just chart`
-  helm-lint:
-    name: Lint Helm chart
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
-      - run: helm lint --strict charts/xake
-      - run: helm template xake charts/xake --set ingress.enabled=true --set autoscaling.enabled=true > /dev/null
+          path: public/maia
+          key: maia-${{ hashFiles('scripts/fetch-maia.sh') }}
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm test
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   docker-build:
     name: Build docker image
-    needs: [python-check, python-test, helm-lint]
+    needs: [lint, e2e]
     # The token of the run is enough to push to ghcr.io, once the package grants this repository write access
     permissions:
       contents: read
@@ -82,7 +70,25 @@ jobs:
             type=ref,event=tag
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
-      - name: Build and push Docker image
+      - name: Build Docker image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          tags: xake:ci
+          load: true
+      # What the image adds to the build: settings from XAKE_*, headers, MIME types, root icons
+      - name: Test the image
+        run: |
+          docker run -d --name xake -p 8000:8000 -e XAKE_DEFAULT_LANGUAGE=fr xake:ci
+          sleep 2
+          curl -fsS http://localhost:8000/healthz
+          curl -fsS http://localhost:8000/config.js | grep -q '"fr"'
+          curl -fsSI http://localhost:8000/ | grep -qi '^cache-control: no-cache'
+          curl -fsSI http://localhost:8000/stockfish/stockfish-19-lite-single.wasm | grep -qi '^content-type: application/wasm'
+          curl -fsSI http://localhost:8000/apple-touch-icon-precomposed.png | grep -qi '^content-type: image/png'
+          bundle=$(curl -fsS http://localhost:8000/ | grep -oE 'assets/index-[^"]+\.js' | head -1)
+          curl -fsSI "http://localhost:8000/$bundle" | grep -qi '^cache-control: .*immutable'
+          ! docker run --rm -e XAKE_DEFAULT_ELO=99 xake:ci
+      - name: Push Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           tags: ${{ steps.meta.outputs.tags }}
@@ -105,45 +111,36 @@ jobs:
           min-versions-to-keep: 0
           delete-only-untagged-versions: "true"
 
-  # Optional: without the RENDER_DEPLOY_HOOK_URL secret there is no demo instance and nothing happens
-  demo-deploy:
-    name: Redeploy the demo instance
+  # The demo: main published on GitHub Pages (Settings → Pages → Source: GitHub Actions)
+  pages:
+    name: Deploy the demo on GitHub Pages
     if: ${{ github.ref == 'refs/heads/main' }}
-    needs: docker-build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Ask Render to deploy the image just built from main
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: |
-          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
-            echo "No demo instance configured"
-            exit 0
-          fi
-          # The hook URL is a secret: its answer is not printed
-          curl --fail --silent --show-error --output /dev/null \
-            "${RENDER_DEPLOY_HOOK_URL}&imgURL=ghcr.io%2Fessembeh%2Fxake%3Amain"
-
-  # Publishes the chart to the gh-pages branch (Helm repository https://essembeh.github.io/xake/)
-  helm-release:
-    name: Update Helm repository
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    needs: docker-build
+    needs: [lint, e2e]
     permissions:
-      contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          fetch-depth: 0
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-      - name: Install Helm
-        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: public/maia
+          key: maia-${{ hashFiles('scripts/fetch-maia.sh') }}
+      - run: npm run build
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
