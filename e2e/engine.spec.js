@@ -13,9 +13,13 @@ async function clickSquare(page, square) {
 }
 
 let errors;
-test.beforeEach(({ page }) => {
+test.beforeEach(async ({ page }, info) => {
   errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  // The welcome sheet is modal: only its own test sees the first visit
+  if (!info.title.startsWith("First visit")) {
+    await page.addInitScript(() => localStorage.setItem("xake:v1:welcomed", "true"));
+  }
 });
 test.afterEach(() => expect(errors).toEqual([]));
 
@@ -46,4 +50,31 @@ test("Maia plays the first move", async ({ page }) => {
   await expect(page.locator("#sheet-new")).toBeHidden({ timeout: 60_000 });
   await expect(page.locator("#moves .mv")).toHaveCount(1, { timeout: 20_000 });
   await expect(page.locator("#strip-top .name")).toHaveText("Maia");
+});
+
+test("First visit: welcome sheet, then the tour, then never again", async ({ page }) => {
+  await page.goto("./");
+  await expect(page.locator("#sheet-welcome")).toBeVisible();
+  await page.click("#welcome-start");
+  await expect(page.locator("#sheet-welcome")).toBeHidden();
+  const bubble = page.locator(".tour");
+  await expect(bubble).toBeVisible();
+  await expect(page.locator(".tour-target")).toHaveCount(1);
+  await page.click(".tour-next");
+  await page.click(".tour-skip");
+  await expect(bubble).toHaveCount(0);
+  await expect(page.locator(".tour-target")).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator("#sheet-welcome")).toBeHidden();
+  await page.click("#btn-settings");
+  await page.click("#settings-intro");
+  await expect(page.locator("#sheet-welcome")).toBeVisible();
+});
+
+test("The install sheet shows the steps of the chosen platform", async ({ page }) => {
+  await page.goto("./");
+  await page.click("#btn-install");
+  await page.click("#install-platform button:has-text('Android')");
+  await expect(page.locator(".install-steps[data-platform=android]")).toBeVisible();
+  await expect(page.locator(".install-steps[data-platform=ios]")).toBeHidden();
 });

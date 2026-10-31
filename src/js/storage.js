@@ -3,6 +3,7 @@ const PREFIX = "xake:v1:";
 const GAME_PREFIX = `${PREFIX}game:`;
 const PREFS_KEY = `${PREFIX}prefs`;
 const CURRENT_KEY = `${PREFIX}current`;
+const WELCOMED_KEY = `${PREFIX}welcomed`;
 
 export const DEFAULT_PREFS = {
   // XAKE_DEFAULT_ELO, injected by /config.js; the level chosen afterwards is stored with the prefs.
@@ -43,6 +44,10 @@ function write(key, value) {
 
 export const loadPrefs = () => ({ ...DEFAULT_PREFS, ...read(PREFS_KEY, {}) });
 export const savePrefs = (prefs) => write(PREFS_KEY, prefs);
+
+// A first visit: nothing stored yet, so players from before the welcome sheet do not get it.
+export const isFirstVisit = () => !read(WELCOMED_KEY, false) && !read(PREFS_KEY, null) && !read(CURRENT_KEY, null);
+export const setWelcomed = () => write(WELCOMED_KEY, true);
 
 // One key per game: saving a move never re-serializes the whole history.
 export function saveGame(game) {

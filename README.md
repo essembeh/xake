@@ -61,6 +61,8 @@ or add it to your phone home screen to play offline.
 - **Rage quit** 😤 (can be turned off in the settings): shows up when the evaluation turns against
   you, to start over and forget the game. Calm, then orange, then red and shaking as your position gets worse.
 - **Mobile first**: touch friendly layout, installable on the iOS / Android home screen (PWA).
+- **A short welcome on the first visit**, then a 4-step tour of the essentials, skippable at any step;
+  an **install** button explains, step by step, how to add Xake to an iPhone or Android home screen.
 - **Stockfish runs on your device** (WebAssembly): the installed app plays and analyses offline,
   about 1 s per analysis on a recent phone.
 

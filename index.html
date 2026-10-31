@@ -44,6 +44,19 @@
       </symbol>
       <symbol id="i-flip" viewBox="0 0 24 24"><path d="M7 4v16M7 4L3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4" /></symbol>
       <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+      </symbol>
+      <symbol id="i-install" viewBox="0 0 24 24">
+        <rect x="6" y="2" width="12" height="20" rx="2" />
+        <path d="M12 7v6m-3-3 3 3 3-3M10.5 18h3" />
+      </symbol>
+      <symbol id="i-github" viewBox="0 0 24 24">
+        <path
+          d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"
+        />
+      </symbol>
       <symbol id="i-keyboard" viewBox="0 0 24 24">
         <rect x="2" y="6" width="20" height="12" rx="2" />
         <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10" />
@@ -104,6 +117,9 @@
       <button id="btn-games" class="tb-btn" data-i18n-title="tb.gamesTitle">
         <svg><use href="#i-list" /></svg><span data-i18n="tb.games">Games</span>
       </button>
+      <button id="btn-install" class="tb-btn" data-i18n-title="tb.install">
+        <svg><use href="#i-install" /></svg>
+      </button>
       <button id="btn-help" class="tb-btn desktop-only" data-i18n-title="tb.help">
         <svg><use href="#i-keyboard" /></svg>
       </button>
@@ -130,7 +146,7 @@
       </section>
 
       <section class="side">
-        <nav class="controls">
+        <nav id="controls" class="controls">
           <button id="btn-first" class="ctrl" data-i18n-title="ctrl.first" data-i18n-aria="ctrl.first">
             <svg><use href="#i-first" /></svg>
           </button>
@@ -206,11 +222,7 @@
       <span>Xake <span id="app-version"></span></span>
       <span aria-hidden="true">·</span>
       <a href="https://github.com/essembeh/xake" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"
-          />
-        </svg>
+        <svg aria-hidden="true"><use href="#i-github" /></svg>
         <span data-i18n="footer.source">Source code on GitHub</span>
       </a>
       <span aria-hidden="true">·</span>
@@ -261,6 +273,9 @@
           <span data-i18n="settings.rage">"Rage quit" button, when you are losing</span>
         </label>
       </section>
+      <button id="settings-intro" type="button" class="wide" data-i18n="settings.intro">
+        Introduction and guided tour
+      </button>
     </dialog>
 
     <dialog id="sheet-new" class="sheet">
@@ -374,6 +389,89 @@
         <dt><kbd data-i18n="help.rightClick"></kbd></dt>
         <dd data-i18n="help.peek"></dd>
       </dl>
+    </dialog>
+
+    <!-- First visit only (spec 002 §13) -->
+    <dialog id="sheet-welcome" class="sheet">
+      <header class="sheet-head">
+        <h2 data-i18n="welcome.title">Welcome to Xake</h2>
+        <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus>
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <p class="welcome-tagline" data-i18n="welcome.tagline">Play chess against the computer and get better.</p>
+      <ul class="welcome-features">
+        <li>
+          <svg aria-hidden="true"><use href="#i-gauge" /></svg>
+          <span
+            ><strong data-i18n="welcome.elo">Pick your opponent's Elo</strong>
+            <small data-i18n="welcome.eloHint">Stockfish, or Maia who plays like a human</small></span
+          >
+        </li>
+        <li>
+          <svg aria-hidden="true"><use href="#i-undo" /></svg>
+          <span
+            ><strong data-i18n="welcome.variations">Go back, change your moves</strong>
+            <small data-i18n="welcome.variationsHint">Try every variation you want</small></span
+          >
+        </li>
+        <li>
+          <svg aria-hidden="true"><use href="#i-bulb" /></svg>
+          <span
+            ><strong data-i18n="welcome.best">Best moves on demand</strong>
+            <small data-i18n="welcome.bestHint">When you are stuck</small></span
+          >
+        </li>
+        <li>
+          <svg aria-hidden="true"><use href="#i-chart" /></svg>
+          <span
+            ><strong data-i18n="welcome.mistakes">Learn from your mistakes</strong>
+            <small data-i18n="welcome.mistakesHint">The analysis points them out</small></span
+          >
+        </li>
+        <li>
+          <svg aria-hidden="true"><use href="#i-lock" /></svg>
+          <span
+            ><strong data-i18n="welcome.private">No account needed</strong>
+            <small data-i18n="welcome.privateHint">Everything stays in your browser</small></span
+          >
+        </li>
+      </ul>
+      <button id="welcome-start" class="primary wide" data-i18n="welcome.start">Play</button>
+      <footer class="welcome-foot">
+        <a href="https://github.com/essembeh/xake" target="_blank" rel="noopener">
+          <svg aria-hidden="true"><use href="#i-github" /></svg><span>GitHub</span>
+        </a>
+        <span aria-hidden="true">·</span>
+        <span data-i18n="welcome.name">Xake means “chess” in Basque.</span>
+      </footer>
+    </dialog>
+
+    <dialog id="sheet-install" class="sheet">
+      <header class="sheet-head">
+        <h2 data-i18n="install.title">Install Xake</h2>
+        <button class="icon-btn" data-close data-i18n-aria="common.close" autofocus>
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <p class="install-intro" data-i18n="install.intro">On your home screen, full screen, playable offline.</p>
+      <div id="install-platform" class="segmented"></div>
+      <ol class="install-steps" data-platform="ios">
+        <li data-i18n="install.ios1">Open Xake in Safari</li>
+        <li>
+          <span data-i18n="install.ios2">Tap Share</span>
+          <svg class="install-icon" aria-hidden="true"><use href="#i-share" /></svg>
+        </li>
+        <li data-i18n="install.ios3">Choose “Add to Home Screen”</li>
+        <li data-i18n="install.ios4">Tap “Add”</li>
+      </ol>
+      <ol class="install-steps" data-platform="android" hidden>
+        <li data-i18n="install.android1">Open Xake in Chrome</li>
+        <li data-i18n="install.android2">Tap the ⋮ menu, top right</li>
+        <li data-i18n="install.android3">Choose “Install app”</li>
+        <li data-i18n="install.android4">Confirm with “Install”</li>
+      </ol>
+      <button id="install-now" class="primary wide" data-i18n="install.now" hidden>Install now</button>
     </dialog>
 
     <div id="promotion" class="promotion" hidden></div>

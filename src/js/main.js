@@ -11,6 +11,7 @@ import { BOARD_THEMES, PIECE_SETS, UI_THEMES, applyThemes, pieceUrl } from "./th
 import { gameFromHash, gameToUrl } from "./share.js";
 import * as sounds from "./sounds.js";
 import { renderTimeline } from "./timeline.js";
+import { startTour } from "./tour.js";
 import * as tree from "./tree.js";
 
 const ENGINE_MIN_DELAY_MS = 300;
@@ -35,6 +36,8 @@ const el = (tag, props = {}, ...children) => {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let prefs = storage.loadPrefs();
+// Read before the first save of the current game, which would mark the visit (spec 002 §13)
+const firstVisit = storage.isFirstVisit();
 // A piece set removed from the bundle would leave broken images (promotion, material strip).
 if (!PIECE_SETS[prefs.pieceSet]) prefs.pieceSet = storage.DEFAULT_PREFS.pieceSet;
 // Games saved before the opponent choice have none: Stockfish (spec 006)
@@ -1229,6 +1232,13 @@ function bind() {
   bindLongPress();
   $("btn-new").onclick = openNewGame;
   $("btn-help").onclick = () => $("sheet-help").showModal();
+  $("btn-install").onclick = openInstall;
+  $("install-now").onclick = async () => {
+    installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    $("sheet-install").close();
+  };
   $("btn-games").onclick = () => {
     renderGamesList();
     $("sheet-games").showModal();
@@ -1324,6 +1334,35 @@ function bind() {
   });
 }
 
+// Chromium offers its own install dialog: kept for the "Install now" button of the install sheet
+let installPrompt = null;
+addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  installPrompt = event;
+});
+
+// Step by step, per platform: iOS has no install prompt (spec 002 §14)
+function openInstall() {
+  const ios =
+    /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Mac/.test(navigator.platform) && navigator.maxTouchPoints > 1);
+  showInstallSteps(ios ? "ios" : "android");
+  $("install-now").hidden = !installPrompt;
+  $("sheet-install").showModal();
+}
+
+function showInstallSteps(platform) {
+  segmented(
+    $("install-platform"),
+    [
+      ["ios", "iPhone / iPad"],
+      ["android", "Android"],
+    ],
+    platform,
+    showInstallSteps,
+  );
+  for (const steps of document.querySelectorAll(".install-steps")) steps.hidden = steps.dataset.platform !== platform;
+}
+
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
   navigator.serviceWorker.register("sw.js").catch((error) => console.warn("service worker", error));
@@ -1353,3 +1392,20 @@ render();
 scheduleAnalysis();
 maybeEngineMove();
 registerServiceWorker();
+// Already installed: nothing to explain
+$("btn-install").hidden = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+// On the first visit, then on demand from the help sheet (spec 002 §13)
+function showWelcome() {
+  // Any way out counts, the close button too: the sheet does not come back by itself
+  $("sheet-welcome").addEventListener("close", storage.setWelcomed, { once: true });
+  $("sheet-welcome").showModal();
+}
+$("welcome-start").onclick = () => {
+  $("sheet-welcome").close();
+  startTour();
+};
+$("settings-intro").onclick = () => {
+  $("sheet-settings").close();
+  showWelcome();
+};
+if (firstVisit) showWelcome();
