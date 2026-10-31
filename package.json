@@ -1,6 +1,6 @@
 {
   "name": "xake",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Chess training web app: play Stockfish or Maia at your level, analyse your games",
   "license": "GPL-3.0-or-later",
   "private": true,
