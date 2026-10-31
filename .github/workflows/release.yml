@@ -111,9 +111,9 @@ jobs:
           min-versions-to-keep: 0
           delete-only-untagged-versions: "true"
 
-  # The demo: main published on GitHub Pages (Settings → Pages → Source: GitHub Actions)
+  # The official instance https://xake.essembeh.org/: main on GitHub Pages (Source: GitHub Actions)
   pages:
-    name: Deploy the demo on GitHub Pages
+    name: Deploy on GitHub Pages
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [lint, e2e]
     permissions:

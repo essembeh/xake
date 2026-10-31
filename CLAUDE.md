@@ -30,7 +30,7 @@ runs in the browser.
   Maia networks (`maia/`, fetched by `scripts/fetch-maia.sh`, never committed).
 - `vite.config.js`: `base: "./"` (root and sub-path), app version (`package.json`) injected as
   `__APP_VERSION__`, Stockfish worker + wasm copied unbundled to `stockfish/`.
-- **Deployment**: GitHub Pages (demo, from `main`) and the Docker image (`Dockerfile`: Node build, then
+- **Deployment**: GitHub Pages (the official instance https://xake.essembeh.org/, from `main`) and the Docker image (`Dockerfile`: Node build, then
   nginx-unprivileged on port 8000, `docker/nginx.conf`, `docker/40-xake-config.sh` for `XAKE_*`).
   CI `.github/workflows/release.yml`: lint, e2e, image tested then pushed to `ghcr.io/essembeh/xake`,
   untagged images deleted, Pages deploy.

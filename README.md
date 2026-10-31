@@ -2,21 +2,24 @@
 
 # Xake
 
-> **TL;DR** Play Stockfish at the Elo you choose, peek at the best moves when you want, and
+### ♟️ Play now: **[xake.essembeh.org](https://xake.essembeh.org/)**
+
+> **TL;DR** Play Stockfish or Maia at the Elo you choose, peek at the best moves when you want, and
 > replay your games with an evaluation graph that points at your mistakes. Runs in the browser,
 > installs on a phone home screen, a static site that stores nothing on any server.
 
 _Xake_ means "chess" in Basque.
 
-## 🚀 Try the demo
+## 🚀 Play
 
-**https://essembeh.github.io/xake/**
+**https://xake.essembeh.org/**
 
-No sign-up, no account: open the page and play.
+The official instance, always the latest version. No sign-up, no account: open the page and play,
+or add it to your phone home screen to play offline.
 
-> This demo is published from `main` on [GitHub Pages](https://pages.github.com/). Stockfish and
-> Maia run on your own device, so it does not slow down when others play. It comes without any
-> guarantee. To keep a game safe, export it as PGN or [host your own](#install).
+> It is served by [GitHub Pages](https://pages.github.com/) and nothing else: Stockfish and Maia run
+> on your own device, so it stays fast however many people play. Your games stay in your browser:
+> export a PGN to keep one safe. You can also [host your own](#install).
 
 ## 🔒 Privacy
 
@@ -27,7 +30,8 @@ No sign-up, no account: open the page and play.
   instance itself.
 - **The engines run on your device**: the server never sees your moves, it only serves the files.
   Shared links carry the game after the `#`, a part of the URL browsers never send to the server.
-- Like any web server, the host may keep standard access logs (IP address, requested URL).
+- Like any web server, the host may keep standard access logs (IP address, requested URL): GitHub
+  for the official instance.
 
 ![Desktop: best moves on demand, numbered arrows, variations and bookmarks](docs/screenshots/desktop-best-moves.png)
 

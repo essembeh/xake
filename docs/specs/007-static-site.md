@@ -89,10 +89,12 @@
   PWA) ; `/healthz` pour une sonde éventuelle.
 - Image 191 → 111 Mo (nginx ~65 Mo, le site 47 Mo dont 31 Mo de réseaux Maia).
 
-### 2.6 GitHub Pages (démo)
+### 2.6 GitHub Pages (instance officielle)
 
-- Job CI sur `main` : build, `actions/upload-pages-artifact`, `actions/deploy-pages`. Remplace la
-  démo Render (job `demo-deploy` et secret `RENDER_DEPLOY_HOOK_URL` supprimés).
+- Instance officielle https://xake.essembeh.org/ (domaine personnalisé, HTTPS forcé), présentée comme
+  telle dans le README depuis le 2026-10-31. Job CI sur `main` : build,
+  `actions/upload-pages-artifact`, `actions/deploy-pages`. Remplace la démo Render (job
+  `demo-deploy` et secret `RENDER_DEPLOY_HOOK_URL` supprimés).
 - Pages passe en source « GitHub Actions » : la branche `gh-pages` (dépôt Helm) n'est plus servie.
 - Pas d'isolation cross-origin sur Pages : sans effet, le moteur est mono-thread (spec 005 §9).
 
