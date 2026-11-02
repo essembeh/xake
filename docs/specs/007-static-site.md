@@ -91,8 +91,9 @@
 
 ### 2.6 GitHub Pages (instance officielle)
 
-- Instance officielle https://xake.essembeh.org/ (domaine personnalisé, HTTPS forcé), présentée comme
-  telle dans le README depuis le 2026-10-31. Job CI sur `main` : build,
+- Instance officielle https://essembeh.github.io/xake/, présentée comme telle dans le README depuis
+  le 2026-10-31. Le domaine personnalisé `xake.essembeh.org` (configuré le 2026-10-31) n'est plus
+  mis en avant depuis le 2026-11-02 : il risque de ne pas être gardé, l'URL github.io reste. Job CI sur `main` : build,
   `actions/upload-pages-artifact`, `actions/deploy-pages`. Remplace la démo Render (job
   `demo-deploy` et secret `RENDER_DEPLOY_HOOK_URL` supprimés).
 - Pages passe en source « GitHub Actions » : la branche `gh-pages` (dépôt Helm) n'est plus servie.

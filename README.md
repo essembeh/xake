@@ -2,7 +2,7 @@
 
 # Xake
 
-### ♟️ Play now: **[xake.essembeh.org](https://xake.essembeh.org/)**
+### ♟️ Play now: **[essembeh.github.io/xake](https://essembeh.github.io/xake/)**
 
 > **TL;DR** Play Stockfish or Maia at the Elo you choose, peek at the best moves when you want, and
 > replay your games with an evaluation graph that points at your mistakes. Runs in the browser,
@@ -12,7 +12,7 @@ _Xake_ means "chess" in Basque.
 
 ## 🚀 Play
 
-**https://xake.essembeh.org/**
+**https://essembeh.github.io/xake/**
 
 The official instance, always the latest version. No sign-up, no account: open the page and play,
 or add it to your phone home screen to play offline.
