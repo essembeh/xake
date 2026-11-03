@@ -2,38 +2,36 @@
 
 # Xake
 
-### ♟️ Play now: **[essembeh.github.io/xake](https://essembeh.github.io/xake/)**
-
 > **TL;DR** Play Stockfish or Maia at the Elo you choose, peek at the best moves when you want, and
 > replay your games with an evaluation graph that points at your mistakes. Runs in the browser,
 > installs on a phone home screen, a static site that stores nothing on any server.
 
 _Xake_ means "chess" in Basque.
 
-## 🚀 Play
-
-**https://essembeh.github.io/xake/**
+## ♟️ Play now: **[essembeh.github.io/xake](https://essembeh.github.io/xake/)**
 
 The official instance, always the latest version. No sign-up, no account: open the page and play,
-or add it to your phone home screen to play offline.
-
-> It is served by [GitHub Pages](https://pages.github.com/) and nothing else: Stockfish and Maia run
-> on your own device, so it stays fast however many people play. Your games stay in your browser:
-> export a PGN to keep one safe. You can also [host your own](#install).
+or add it to your phone home screen to play offline. You can also [host your own](#install).
 
 ## 🔒 Privacy
 
-- **No sign-up, no account, no login.**
-- **Your games live in your browser** (`localStorage`), on your device only: there is no backend,
-  the site is static files. Clearing the site data deletes them, export a PGN to keep one.
-- **No cookies, no analytics, no tracking, no third-party request**: every file is served by the
-  instance itself.
-- **The engines run on your device**: the server never sees your moves, it only serves the files.
-  Shared links carry the game after the `#`, a part of the URL browsers never send to the server.
-- Like any web server, the host may keep standard access logs (IP address, requested URL): GitHub
-  for the official instance.
+- **Nothing leaves your device**: Stockfish and Maia run in your browser, your games stay in its
+  `localStorage` (export a PGN to keep one), shared links carry the game after the `#`, never sent
+  to the server.
+- **No account, no cookies, no analytics, no third-party request**: a static site, every file served
+  by the instance itself. Its host may keep standard access logs (GitHub for the official instance).
+
+## 📸 Screenshots
 
 ![Desktop: best moves on demand, numbered arrows, variations and bookmarks](docs/screenshots/desktop-best-moves.png)
+
+| Game analysis | Game over |
+| --- | --- |
+| ![Game analysis: evaluation graph, judged moves and the alternatives to a mistake](docs/screenshots/desktop-timeline.png) | ![Game over card](docs/screenshots/desktop-game-over.png) |
+
+| Mobile, dark theme | Settings | In French |
+| --- | --- | --- |
+| ![Mobile dark theme with best moves](docs/screenshots/mobile-dark.png) | ![Settings sheet](docs/screenshots/mobile-settings.png) | ![French interface](docs/screenshots/mobile-french.png) |
 
 ## Features
 
@@ -65,14 +63,6 @@ or add it to your phone home screen to play offline.
   an **install** button explains, step by step, how to add Xake to an iPhone or Android home screen.
 - **Stockfish runs on your device** (WebAssembly): the installed app plays and analyses offline,
   about 1 s per analysis on a recent phone.
-
-| Game analysis | Game over |
-| --- | --- |
-| ![Game analysis: evaluation graph, judged moves and the alternatives to a mistake](docs/screenshots/desktop-timeline.png) | ![Game over card](docs/screenshots/desktop-game-over.png) |
-
-| Mobile, dark theme | Settings | In French |
-| --- | --- | --- |
-| ![Mobile dark theme with best moves](docs/screenshots/mobile-dark.png) | ![Settings sheet](docs/screenshots/mobile-settings.png) | ![French interface](docs/screenshots/mobile-french.png) |
 
 ## How it works
 
