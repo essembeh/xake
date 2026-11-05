@@ -29,7 +29,8 @@
   partie ou recharger revient au mode jeu.
 - Affiche la courbe d'évaluation (spec 002 §4) et colore la case des coups jugés dans la liste :
   liseré gauche et fond de la couleur du jugement (plus marqué pour une gaffe, discret pour un
-  meilleur coup), glyphe agrandi.
+  meilleur coup), glyphe agrandi. La case du coup affiché porte un contour de la couleur d'accent :
+  son fond vert pâle seul se perdait parmi les cases colorées, notamment après un clic sur la courbe.
 - Stockfish ne joue jamais ; le plateau n'accepte de coup qu'après un coup de Stockfish (§4). Annuler, changer de camp, deux camps,
   les meilleurs coups et la barre d'évaluation (toujours affichée ici) sont désactivés. La navigation (liste, ◀ ▶, courbe, signets)
   reste libre.

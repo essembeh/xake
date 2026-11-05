@@ -1014,6 +1014,12 @@ cg-board square.check {
   background: color-mix(in srgb, var(--judged) 28%, transparent);
 }
 
+/* The ring stays visible over the judged colours, where the pale current background gets lost (spec 004 §3). */
+.moves .cell:has(> .mv.current) {
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
 .moves .cell[class*="judged-"] .glyph {
   font-size: 15px;
   line-height: 1;
