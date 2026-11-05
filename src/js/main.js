@@ -631,9 +631,10 @@ async function pumpEvals() {
     evalRetryTimer = setTimeout(pumpEvals, EVAL_RETRY_MS * 2 ** (evalFailures - 1));
 }
 
-async function maybeEngineMove() {
+// `follow`: I replayed a move already in the tree, the engine replays its reply on the browsed line (spec 001 §6.5).
+async function maybeEngineMove({ follow = false } = {}) {
   const n = tree.current(game);
-  if (reviewing || game.twoSides || n.children.length || thinking) return;
+  if (reviewing || game.twoSides || thinking || (n.children.length && !follow)) return;
   const chess = tree.chessAt(game, n.id);
   if (chess.isGameOver() || colorOf(chess) === game.playerColor) return;
 
@@ -642,7 +643,10 @@ async function maybeEngineMove() {
   render();
   const started = performance.now();
   try {
-    const move = await engine.engineMove(position(n.id), game.elo, ctrl.signal, opponentOf(game));
+    const line = displayedLine();
+    const move = n.children.length
+      ? tree.node(game, line[line.indexOf(n.id) + 1])
+      : await engine.engineMove(position(n.id), game.elo, ctrl.signal, opponentOf(game));
     await sleep(Math.max(0, ENGINE_MIN_DELAY_MS - (performance.now() - started)));
     if (ctrl.signal.aborted || game.currentId !== n.id) return;
     engineCtrl = null;
@@ -674,7 +678,7 @@ function playMove(uci, by) {
   persist();
   render();
   scheduleAnalysis();
-  maybeEngineMove();
+  maybeEngineMove({ follow: by === "me" });
 }
 
 function askPromotion(color) {

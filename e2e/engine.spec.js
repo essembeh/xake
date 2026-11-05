@@ -41,6 +41,24 @@ test("Stockfish replies, shows the best moves and is cached for offline", async 
     .toEqual(expect.arrayContaining(ENGINE_FILES.map((name) => expect.stringContaining(name))));
 });
 
+test("Replaying a move already in the tree replays the engine reply", async ({ page }) => {
+  await page.goto("./");
+  await page.goto("./#c=w&e=1500&m=");
+  await clickSquare(page, "e2");
+  await clickSquare(page, "e4");
+  const reply = page.locator("#moves .cell > .mv").nth(1);
+  await expect(reply).toBeVisible({ timeout: 20_000 });
+  const san = await reply.textContent();
+  await page.click("#btn-first");
+  await clickSquare(page, "d2");
+  await clickSquare(page, "d4");
+  await expect(page.locator("#moves .cell > .mv")).toHaveCount(2, { timeout: 20_000 });
+  await page.click("#btn-first");
+  await clickSquare(page, "e2");
+  await clickSquare(page, "e4");
+  await expect(page.locator("#moves .mv.current")).toHaveText(san, { timeout: 5_000 });
+});
+
 test("Maia plays the first move", async ({ page }) => {
   await page.goto("./");
   await page.click("#btn-new");
